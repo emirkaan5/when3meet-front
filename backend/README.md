@@ -9,5 +9,8 @@
 
    (Make sure your IP is allowed in Atlas)
 
-3. Run the dev server
+3. (opt) Install the necessary packages if this is the first time you run the code here
+   `npm i`
+
+4. Run the dev server
     `npm run dev`
