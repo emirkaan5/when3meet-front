@@ -1,24 +1,22 @@
-const { Schema, model } = require("mongoose");
+const { Schema, model, Types } = require('mongoose');
+const ObjectId = Types.ObjectId;
 
 const Event = new Schema(
   {
     title: String,
     description: String,
-    creator: { type: ObjectId, ref: "User", required: true },
-    window: { start: Date, end: Date, required: true }, // candidate range
+    creator: { type: ObjectId, ref: "User", required: true }, // ObjectID: 24-char ID pointing to another collection's document
+    window: {
+      start: { type: Date, required: true },
+      end: { type: Date, required: true },
+    }, // time range
     participants: [
       {
-        userId: { type: ObjectId, ref: "User" },
-        response: {
-          type: String,
-          enum: ["pending", "accepted", "declined"],
-          default: "pending",
-        },
-        gCalEventId: String,
-      },
+        userId: { type: ObjectId, ref: "User", required: true },
+      }, // record users who have filled availability
     ],
     determinedTime: Date,
-    schemaVersion: { type: Number, default: 1 },
+    schemaVersion: { type: Number, default: 1 }, // in case we change structure of the collection, allows for easy migrations
   },
   { timestamps: true }
 );
