@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>When3Meet – Homepage</title>
+  <style>
+    :root{ --bg:#ffffff; --text:#1b1b1f; --primary:#5b3df6; --primary-600:#4b2ef0; --card:#5f46f7; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:var(--bg);color:var(--text);display:flex;justify-content:center;align-items:flex-start;padding:24px;opacity:0;animation:fade-in 240ms ease forwards}
+    @keyframes fade-in{to{opacity:1}}
+    .fade-out{opacity:0 !important; transition:opacity 180ms ease}
+
+    .page-label{position:fixed;top:8px;left:8px;color:#67aefc;font-weight:700}
+    .frame{width:min(940px,92vw);min-height:560px;border:3px solid #67aefc;border-radius:6px;padding:28px 28px 72px;position:relative;background:#fff;box-shadow:0 8px 24px rgba(0,0,0,.04)}
+    .grid{display:grid;grid-template-columns:1.05fr 1fr;gap:32px}
+    h1{font-size:24px;font-weight:700;margin:0 0 18px}
+    h2{font-size:18px;font-weight:700;margin:22px 0 8px}
+    .subtle-rule{height:1px;background:#eaeaea;margin:10px 0 14px}
+    .btn-primary{appearance:none;border:0;border-radius:999px;padding:12px 18px;font-weight:700;background:var(--primary);color:#fff;cursor:pointer;box-shadow:0 6px 18px rgba(91,61,246,.3);transition:transform .06s ease,box-shadow .2s ease,background .2s ease;display:inline-block;text-decoration:none}
+    .btn-primary:hover{background:var(--primary-600);box-shadow:0 8px 22px rgba(75,46,240,.35)}
+    .btn-primary:active{transform:translateY(1px)}
+    .card{background:var(--card);color:#fff;border-radius:12px;padding:12px 14px;width:100%;max-width:330px;box-shadow:0 10px 24px rgba(95,70,247,.35)}
+    .card .title{font-size:14px;font-weight:700;margin-bottom:6px}
+    .card .meta{font-size:12px;opacity:.85;line-height:1.35}
+    .meetings h2{margin-top:0}
+    .stack{display:grid;gap:14px}
+    .left .block{margin-bottom:20px}
+    .fab{position:absolute;right:22px;bottom:22px;width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--primary);color:#fff;font-size:28px;line-height:0;box-shadow:0 10px 24px rgba(91,61,246,.4);cursor:pointer;border:none;transition:transform .08s ease,background .2s ease}
+    .fab:hover{background:var(--primary-600)} .fab:active{transform:translateY(1px)}
+    @media (max-width:780px){.grid{grid-template-columns:1fr}.card{max-width:100%}}
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('a[data-transition]')
+        .forEach(a => a.addEventListener('click', (e) => {
+          const url = a.getAttribute('href');
+          if(!url || url.startsWith('#')) return;
+          e.preventDefault();
+          document.body.classList.add('fade-out');
+          setTimeout(() => window.location.href = url, 180);
+        }));
+    });
+  </script>
+</head>
+<body>
+  <div class="page-label">Homepage</div>
+  <main class="frame">
+    <div class="grid">
+      <section class="left">
+        <h1>When3Meet</h1>
+        <div class="block">
+          <button class="btn-primary">Create Meeting</button>
+        </div>
+        <div class="block">
+          <a class="btn-primary" href="availability.html" data-transition role="button">Add Availability</a>
+        </div>
+        <div class="subtle-rule" aria-hidden="true"></div>
+        <div class="block">
+          <h2>Upcoming Events</h2>
+          <div class="card" aria-label="Doctor's Appointment, tomorrow 1:30 PM">
+            <div class="title">Doctor’s Appointment</div>
+            <div class="meta">Tomorrow — 1:30 PM</div>
+          </div>
+        </div>
+      </section>
+      <section class="meetings">
+        <h2>My Meetings</h2>
+        <div class="stack">
+          <div class="card"><div class="title">Planning Meeting</div><div class="meta">Thursday, April 25<br>9:00 AM — 10:00 AM</div></div>
+          <div class="card"><div class="title">Project Kickoff</div><div class="meta">Tuesday, May 7<br>2:00 PM — 3:00 PM</div></div>
+          <div class="card"><div class="title">Project Kickoff</div><div class="meta">Tuesday, May 7<br>2:00 PM — 3:00 PM</div></div>
+        </div>
+      </section>
+    </div>
+    <button class="fab" aria-label="Add"><span aria-hidden="true">+</span></button>
+  </main>
+</body>
+</html>

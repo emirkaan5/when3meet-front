@@ -1,0 +1,109 @@
+<!-- File: manual.html (Add Availability Manually) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Add Availability Manually – When3Meet</title>
+  <style>
+    :root{--primary:#5b3df6;--primary-600:#4b2ef0;--text:#1b1b1f;--muted:#6b7280}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;background:#fff;color:var(--text);display:flex;justify-content:center;align-items:flex-start;padding:24px;opacity:0;animation:fade-in 240ms ease forwards}
+    @keyframes fade-in{to{opacity:1}}
+    .fade-out{opacity:0 !important; transition:opacity 180ms ease}
+
+    .panel{width:min(760px,96vw);border:1px solid #ececec;border-radius:8px;padding:18px 18px 24px;box-shadow:0 8px 24px rgba(0,0,0,.04)}
+    .crumb{font-weight:700;color:#c6c8ce;margin-bottom:8px}
+    h1{font-size:20px;margin:6px 0 14px}
+
+    .layout{display:grid;grid-template-columns:auto 1fr 240px;gap:18px}
+
+    .times{display:grid;gap:12px;align-content:start;padding-top:28px}
+    .times div{font-size:12px;color:#4b5563}
+
+    .grid-wrap{padding-top:6px}
+    .grid{display:grid;grid-template-columns:repeat(7,28px);grid-auto-rows:28px;border:2px solid #d1d5db;border-radius:4px;overflow:hidden}
+    .grid .cell{border:1px solid #e5e7eb; background:#fff; cursor:pointer}
+    .grid .cell.active{background:#5f46f7;}
+    .dayheads{display:grid;grid-template-columns:repeat(7,28px);gap:0;margin-left:0;margin-bottom:6px;padding-left:28px}
+    .dayheads span{font-size:11px;color:#374151;letter-spacing:.04em}
+
+    .help{padding-top:18px}
+    .help h2{margin:0 0 8px; font-size:18px}
+    .help ul{margin:0;padding-left:18px;color:#111}
+
+    .actions{display:flex;gap:16px;margin-top:18px}
+    .btn{flex:1;display:inline-block;text-align:center;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;background:#eee;color:#111;box-shadow:none;text-decoration:none}
+    .btn.primary{background:var(--primary); color:#fff; box-shadow:0 8px 22px rgba(91,61,246,.35)}
+    .btn.primary:hover{background:var(--primary-600)}
+  </style>
+  <script>
+    // Transition links
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('a[data-transition]')
+        .forEach(a => a.addEventListener('click', (e) => {
+          const url = a.getAttribute('href');
+          if(!url || url.startsWith('#')) return;
+          e.preventDefault();
+          document.body.classList.add('fade-out');
+          setTimeout(() => window.location.href = url, 180);
+        }));
+
+      // Build the grid: 16 hours (6AM–9PM), 7 days
+      const grid = document.querySelector('.grid');
+      const rows = 16, cols = 7;
+      for(let r=0;r<rows;r++){
+        for(let c=0;c<cols;c++){
+          const cell = document.createElement('div');
+          cell.className='cell';
+          grid.appendChild(cell);
+        }
+      }
+
+      // click & drag toggle
+      let dragging=false; let add=true;
+      const set = (el)=>{ if(!el || !el.classList) return; el.classList[add?'add':'remove']('active'); };
+      grid.addEventListener('mousedown', (e)=>{ if(e.target.classList.contains('cell')){ dragging=true; add=!e.target.classList.contains('active'); set(e.target);} });
+      grid.addEventListener('mousemove', (e)=>{ if(dragging) set(e.target); });
+      grid.addEventListener('mouseup', ()=> dragging=false);
+      grid.addEventListener('mouseleave', ()=> dragging=false);
+    });
+  </script>
+</head>
+<body>
+  <div class="panel">
+    <div class="crumb">Add Availability Manually</div>
+    <h1>Add Availability</h1>
+
+    <div class="layout">
+      <!-- Time labels -->
+      <div class="times">
+        <div>6:00 AM</div><div>7:00 AM</div><div>8:00 AM</div><div>9:00 AM</div>
+        <div>10:00 AM</div><div>11:00 AM</div><div>12:00 PM</div><div>1:00 PM</div>
+        <div>2:00 PM</div><div>3:00 PM</div><div>4:00 PM</div><div>5:00 PM</div>
+        <div>6:00 PM</div><div>7:00 PM</div><div>8:00 PM</div><div>9:00 PM</div>
+      </div>
+
+      <!-- Availability grid -->
+      <div class="grid-wrap">
+        <div class="dayheads"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+        <div class="grid" aria-label="availability grid"></div>
+      </div>
+
+      <!-- Help text -->
+      <div class="help">
+        <h2>Set your availability<br>on the grid</h2>
+        <ul>
+          <li>Click and drag to add times</li>
+          <li>Click on a time to remove it</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a class="btn" href="availability.html" data-transition>Back</a>
+      <a class="btn primary" href="index.html" data-transition>Allow</a>
+    </div>
+  </div>
+</body>
+</html>
