@@ -12,7 +12,7 @@ const Event = new Schema(
     }, // time range
     participants: [
       {
-        userId: { type: ObjectId, ref: "User", required: true },
+        email: { type: string, ref: "Availability", required: true },
       }, // record users who have filled availability
     ],
     determinedTime: Date,
