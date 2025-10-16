@@ -1,9 +1,8 @@
-/* require("dotenv").config();
-const express = require("express");
+require("dotenv").config();
 const { connectDB } = require("./config/db");
+const app = require("./app")
 
-const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 const MONGO_URI = process.env.MONGODB_URI;
 
 app.get("/sth", (req, res) => {
