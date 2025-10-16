@@ -6,6 +6,6 @@ const app = express();
 app.use(express.json());
 
 app.use("/api/events", event_routes);
-app.use("/api/availability", availability_routes);
+app.use("/api", availability_routes);
 
 module.exports = app;

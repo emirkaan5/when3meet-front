@@ -1,24 +1,30 @@
-const { Schema, model, Types } = require('mongoose');
-const ObjectId = Types.ObjectId;
+const { Schema, model } = require("mongoose");
 
 const Event = new Schema(
   {
     title: String,
     description: String,
-    creator: { type: ObjectId, ref: "User", required: true }, // ObjectID: 24-char ID pointing to another collection's document
+    creator: { type: String, required: true, lowercase: true, trim: true },
     window: {
       start: { type: Date, required: true },
       end: { type: Date, required: true },
-    }, // time range
+    },
+    // time range
     participants: [
       {
-        email: { type: string, ref: "Availability", required: true },
-      }, // record users who have filled availability
+        email: { type: String, lowercase: true, trim: true },
+      },
     ],
+    // record users who have filled availability
     determinedTime: Date,
-    schemaVersion: { type: Number, default: 1 }, // in case we change structure of the collection, allows for easy migrations
+    schemaVersion: { type: Number, default: 1 },
+    // in case we change structure of the collection, allows for easy migrations
   },
   { timestamps: true }
 );
+
+// Event.path("window").validate(function (val) {
+//   return val?.start && val?.end && val.start < val.end;
+// }, "Event window.start must be earlier than window.end");
 
 module.exports = model("Event", Event);
