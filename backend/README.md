@@ -74,8 +74,8 @@ PORT=50001
   _id: ObjectId,
   eventId: ObjectId, // ref Event — required
   email: string,     // required
+  userName: string
   slots: [{ start: Date, end: Date }],
-  comment?: string,
   createdAt: Date,
   updatedAt: Date
 }
