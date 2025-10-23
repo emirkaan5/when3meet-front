@@ -1,0 +1,607 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Event – When3Meet</title>
+  <style>
+    :root {
+      --bg: #faf7ff;
+      --primary: #7b61ff;
+      --light: #f2ecff;
+      --border: #e2d8f5;
+      --text: #1a1a1a;
+      --muted: #6b7280;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 60px 12px;
+      opacity: 0;
+      animation: fade-in 240ms ease forwards;
+    }
+
+    @keyframes fade-in { to { opacity: 1; } }
+
+    .card {
+      width: min(420px, 92vw);
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+      padding: 24px 28px 28px;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin: 0 0 20px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 13px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 14px;
+      font-family: inherit;
+    }
+
+    .time-range {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .time-range input {
+      width: 100%;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+
+    .calendar-header h3 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .calendar-header button {
+      border: none;
+      background: transparent;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--muted);
+      line-height: 1;
+      padding: 2px 4px;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      text-align: center;
+      font-size: 12px;
+      margin-top: 4px;
+      user-select: none;
+    }
+
+    .calendar div {
+      padding: 6px 0;
+      border-radius: 5px;
+      cursor: pointer;
+      color: #333;
+      border: 1px solid transparent;
+    }
+
+    .calendar div.header {
+      font-weight: 600;
+      color: var(--muted);
+      cursor: default;
+    }
+
+    .calendar div.selected {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .calendar div:hover {
+      background: var(--light);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: background 0.2s ease;
+    }
+
+    .cancel-btn {
+      background: #eee;
+      color: #333;
+    }
+
+    .cancel-btn:hover {
+      background: #e0e0e0;
+    }
+
+    .create-btn {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .create-btn:hover {
+      background: #6d52f3;
+    }
+
+    p.helper {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: -4px;
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>New event</h1>
+
+    <label for="title">Event name</label>
+    <input id="title" placeholder="Planning Meeting" />
+
+    <label>What times might work?</label>
+    <div class="time-range">
+      <input id="start" type="text" placeholder="09:00" /> to
+      <input id="end" type="text" placeholder="17:00" />
+    </div>
+
+    <label>What dates might work?</label>
+    <p class="helper">Drag to select multiple dates</p>
+
+    <div class="calendar-header">
+      <button id="prevMonth">&#8249;</button>
+      <h3 id="monthLabel">September 2025</h3>
+      <button id="nextMonth">&#8250;</button>
+    </div>
+
+    <div class="calendar" id="calendar"></div>
+
+    <div class="actions">
+      <button class="cancel-btn" onclick="window.location.href='index.html'">Cancel</button>
+      <button class="create-btn" id="createBtn">Create</button>
+    </div>
+  </div>
+
+  <script>
+    const monthLabel = document.getElementById("monthLabel");
+    const calendar = document.getElementById("calendar");
+
+    let currentDate = new Date(2025, 8); // September 2025
+    renderCalendar();
+
+    document.getElementById("prevMonth").onclick = () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar();
+    };
+    document.getElementById("nextMonth").onclick = () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    };
+
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const monthName = currentDate.toLocaleString("default", { month: "long" });
+
+      monthLabel.textContent = `${monthName} ${year}`;
+      calendar.innerHTML = "";
+
+      const weekdays = ["M", "T", "W", "T", "F", "S", "S"];
+      weekdays.forEach(d => {
+        const day = document.createElement("div");
+        day.className = "header";
+        day.textContent = d;
+        calendar.appendChild(day);
+      });
+
+      const blanks = (firstDay + 6) % 7;
+      for (let i = 0; i < blanks; i++) {
+        const empty = document.createElement("div");
+        calendar.appendChild(empty);
+      }
+
+      let isDragging = false;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const day = document.createElement("div");
+        day.textContent = d;
+        day.addEventListener("mousedown", () => {
+          isDragging = true;
+          day.classList.toggle("selected");
+        });
+        day.addEventListener("mouseenter", () => {
+          if (isDragging) day.classList.add("selected");
+        });
+        calendar.appendChild(day);
+      }
+      document.addEventListener("mouseup", () => (isDragging = false));
+    }
+
+    document.getElementById("createBtn").addEventListener("click", () => {
+      const title = document.getElementById("title").value.trim();
+      const startTime = document.getElementById("start").value.trim();
+      const endTime = document.getElementById("end").value.trim();
+      const selectedDays = Array.from(document.querySelectorAll(".calendar div.selected")).map(
+        d => d.textContent
+      );
+
+      if (!title || !startTime || !endTime || selectedDays.length === 0) {
+        alert("Please fill all fields and select at least one date.");
+        return;
+      }
+
+      // Basic validation for 24-hour times
+      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+      if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+        alert("Please enter valid 24-hour times (e.g. 09:00 or 17:30).");
+        return;
+      }
+
+      const eventData = { title, startTime, endTime, selectedDays };
+      localStorage.setItem("eventData", JSON.stringify(eventData));
+      window.location.href = "manual.html";
+    });
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("createBtn").click();
+      }
+    });
+    
+  </script>
+</body>
+</html> -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Event – When3Meet</title>
+  <style>
+    :root {
+      --bg: #faf7ff;
+      --primary: #7b61ff;
+      --light: #f2ecff;
+      --border: #e2d8f5;
+      --text: #1a1a1a;
+      --muted: #6b7280;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 60px 12px;
+      opacity: 0;
+      animation: fade-in 240ms ease forwards;
+    }
+
+    @keyframes fade-in { to { opacity: 1; } }
+
+    .card {
+      width: min(420px, 92vw);
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+      padding: 24px 28px 28px;
+    }
+
+    h1 {
+      font-size: 20px;
+      margin: 0 0 20px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 13px;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px 10px;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      margin-bottom: 14px;
+      font-family: inherit;
+    }
+
+    .time-range {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      margin-bottom: 8px;
+    }
+
+    .calendar-header h3 {
+      margin: 0;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text);
+    }
+
+    .calendar-header button {
+      border: none;
+      background: transparent;
+      font-size: 16px;
+      cursor: pointer;
+      color: var(--muted);
+      line-height: 1;
+      padding: 2px 4px;
+    }
+
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+      text-align: center;
+      font-size: 12px;
+      margin-top: 4px;
+      user-select: none;
+    }
+
+    .calendar div {
+      padding: 6px 0;
+      border-radius: 5px;
+      cursor: pointer;
+      color: #333;
+      border: 1px solid transparent;
+    }
+
+    .calendar div.header {
+      font-weight: 600;
+      color: var(--muted);
+      cursor: default;
+    }
+
+    .calendar div.selected {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .calendar div:hover {
+      background: var(--light);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: none;
+      border-radius: 6px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13px;
+      transition: background 0.2s ease;
+    }
+
+    .cancel-btn {
+      background: #eee;
+      color: #333;
+    }
+
+    .cancel-btn:hover {
+      background: #e0e0e0;
+    }
+
+    .create-btn {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .create-btn:hover {
+      background: #6d52f3;
+    }
+
+    p.helper {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: -4px;
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>New event</h1>
+
+    <label for="title">Event name</label>
+    <input id="title" placeholder="Planning Meeting" />
+
+    <label>What times might work?</label>
+    <div class="time-range">
+      <input id="start" type="text" placeholder="09:00" /> to
+      <input id="end" type="text" placeholder="17:00" />
+    </div>
+
+    <label>What dates might work?</label>
+    <p class="helper">Drag to select multiple dates</p>
+
+    <div class="calendar-header">
+      <button id="prevMonth">&#8249;</button>
+      <h3 id="monthLabel">September 2025</h3>
+      <button id="nextMonth">&#8250;</button>
+    </div>
+
+    <div class="calendar" id="calendar"></div>
+
+    <div class="actions">
+      <button class="cancel-btn" onclick="window.location.href='index.html'">Cancel</button>
+      <button class="create-btn" id="createBtn">Create</button>
+    </div>
+  </div>
+
+  <script>
+    const monthLabel = document.getElementById("monthLabel");
+    const calendar = document.getElementById("calendar");
+
+    let currentDate = new Date();
+    renderCalendar();
+
+    document.getElementById("prevMonth").onclick = () => {
+      currentDate.setMonth(currentDate.getMonth() - 1);
+      renderCalendar();
+    };
+    document.getElementById("nextMonth").onclick = () => {
+      currentDate.setMonth(currentDate.getMonth() + 1);
+      renderCalendar();
+    };
+
+    function renderCalendar() {
+      const year = currentDate.getFullYear();
+      const month = currentDate.getMonth();
+      const firstDay = new Date(year, month, 1).getDay();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const monthName = currentDate.toLocaleString("default", { month: "long" });
+
+      monthLabel.textContent = `${monthName} ${year}`;
+      calendar.innerHTML = "";
+
+      const weekdays = ["M", "T", "W", "T", "F", "S", "S"];
+      weekdays.forEach(d => {
+        const day = document.createElement("div");
+        day.className = "header";
+        day.textContent = d;
+        calendar.appendChild(day);
+      });
+
+      const blanks = (firstDay + 6) % 7;
+      for (let i = 0; i < blanks; i++) {
+        const empty = document.createElement("div");
+        calendar.appendChild(empty);
+      }
+
+      let isDragging = false;
+      for (let d = 1; d <= daysInMonth; d++) {
+        const day = document.createElement("div");
+        day.textContent = d;
+        day.addEventListener("mousedown", () => {
+          isDragging = true;
+          day.classList.toggle("selected");
+        });
+        day.addEventListener("mouseenter", () => {
+          if (isDragging) day.classList.add("selected");
+        });
+        calendar.appendChild(day);
+      }
+      document.addEventListener("mouseup", () => (isDragging = false));
+    }
+
+    document.getElementById("createBtn").addEventListener("click", () => {
+      const title = document.getElementById("title").value.trim();
+      const startTime = document.getElementById("start").value.trim();
+      const endTime = document.getElementById("end").value.trim();
+      const selectedDays = Array.from(document.querySelectorAll(".calendar div.selected")).map(d => parseInt(d.textContent));
+
+      if (!title || !startTime || !endTime || selectedDays.length === 0) {
+        alert("Please fill all fields and select at least one date.");
+        return;
+      }
+
+      const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
+      if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
+        alert("Please enter valid 24-hour times (e.g. 09:00 or 17:30).");
+        return;
+      }
+
+      const month = currentDate.getMonth();
+      const year = currentDate.getFullYear();
+      const startDate = new Date(year, month, Math.min(...selectedDays));
+      const endDate = new Date(year, month, Math.max(...selectedDays));
+
+      const formattedStart = startDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+      const formattedEnd = endDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+      // ✅ FIX: include selectedDays array in saved data
+      const eventData = {
+        title,
+        startTime,
+        endTime,
+        startDate: formattedStart,
+        endDate: formattedEnd,
+        selectedDays,
+        month,
+        year
+      };
+
+      localStorage.setItem("eventData", JSON.stringify(eventData));
+      window.location.href = "manual.html";
+    });
+
+    document.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("createBtn").click();
+      }
+    });
+  </script>
+</body>
+</html>
