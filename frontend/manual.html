@@ -6,14 +6,14 @@
   <title>When3Meet – Add Availability</title>
   <style>
     :root {
-      --purple: #daa7da;
+      --purple: #996899;
       --border: #e6e6f0;
       --text: #1a1a1a;
       --muted: #6b7280;
       --gridline: #f0f0fa;
       --active: #E3C5E3;
       --col-width: 180px;
-      --cell-h: 26px; /* one 30-min cell */
+      --cell-h: 26px;
     }
 
     * { box-sizing: border-box; }
@@ -68,7 +68,6 @@
     .btn.primary { background: var(--purple); color: #fff; border: none; }
     .btn.primary:hover { background: #c38bc3; }
 
-    /* Schedule */
     .schedule {
       display: grid;
       grid-template-columns: 60px 1fr;
@@ -77,12 +76,9 @@
     }
 
     .time-labels {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
+      position: relative;
       font-size: 13px;
       color: var(--muted);
-      position: relative;
     }
 
     .time-label {
@@ -159,6 +155,77 @@
       padding: 2px 0;
       color: var(--muted);
     }
+
+    /* Modern Modal */
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+      z-index: 1000;
+    }
+
+    .modal.show {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .modal-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 32px 32px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      width: 340px;
+      text-align: center;
+      animation: fadeInUp 0.25s ease;
+    }
+
+    .modal-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .modal-card input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #dcdcdc;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .modal-card input:focus {
+      outline: none;
+      border-color: var(--purple);
+      box-shadow: 0 0 0 3px rgba(218,167,218,0.2);
+    }
+
+    .modal-card button {
+      width: 100%;
+      background: var(--purple);
+      border: none;
+      color: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .modal-card button:hover { background: #c38bc3; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 
@@ -172,7 +239,7 @@
         </div>
         <div class="header-right">
           <button class="btn" id="copyLink">Copy link</button>
-          <button class="btn primary">Add availability</button>
+          <button class="btn primary" id="addAvailability">Add availability</button>
         </div>
       </div>
 
@@ -195,20 +262,45 @@
 
     <div class="sidebar">
       <div class="responses-box">
-        <h3>Responses (0/0)</h3>
-        <p class="muted">No responses yet!</p>
+        <h3 id="responseHeader">Responses (0/0)</h3>
+        <ul id="responseList" class="muted" style="padding-left: 18px; margin: 8px 0 0;"></ul>
       </div>
+    </div>
+  </div>
+
+  <!-- Beautiful name modal -->
+  <div class="modal" id="nameModal">
+    <div class="modal-card">
+      <h3>Enter your name</h3>
+      <input type="text" id="userName" placeholder="Your name" />
+      <button id="saveAvailability">Save my availability</button>
     </div>
   </div>
 
   <script>
     const eventData = JSON.parse(localStorage.getItem("eventData"));
+    const responses = JSON.parse(localStorage.getItem("responses") || "{}");
+
+    function renderResponses() {
+      const list = document.getElementById("responseList");
+      const header = document.getElementById("responseHeader");
+      const eventKey = eventData?.title || "defaultEvent";
+      const eventResponses = responses[eventKey] || [];
+      list.innerHTML = "";
+
+      eventResponses.forEach(r => {
+        const li = document.createElement("li");
+        li.textContent = r.name;
+        list.appendChild(li);
+      });
+
+      header.textContent = `Responses (${eventResponses.length}/${eventResponses.length})`;
+    }
 
     if (eventData) {
       const { title, startTime, endTime, selectedDays, month, year } = eventData;
       document.getElementById("eventName").textContent = title;
 
-      // Date range
       const firstDate = new Date(year, month, Math.min(...selectedDays));
       const lastDate = new Date(year, month, Math.max(...selectedDays));
       document.getElementById("eventDates").textContent =
@@ -218,18 +310,15 @@
             lastDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
           : "");
 
-      // Time range
       const startH = parseInt(startTime.split(":")[0]);
       const endH = parseInt(endTime.split(":")[0]);
       const hours = endH - startH;
-      const totalCells = hours * 2; // 2 half-hours per hour
+      const totalCells = hours * 2;
 
-      // Create day grids
       const dayColumns = document.getElementById("dayColumns");
       dayColumns.innerHTML = "";
       selectedDays.forEach(dayNum => {
         const dateObj = new Date(year, month, dayNum);
-
         const col = document.createElement("div");
         col.className = "day-column";
 
@@ -251,14 +340,13 @@
         dayColumns.appendChild(col);
       });
 
-      // Perfectly align hour labels with grid lines
+      // Align time labels
       const timeLabels = document.getElementById("timeLabels");
-      timeLabels.innerHTML = "";
-
       const firstGrid = document.querySelector(".day-grid");
       const headerHeight = document.querySelector(".day-header").offsetHeight + 8;
       const cellH = parseFloat(getComputedStyle(firstGrid).getPropertyValue("--cell-h") || 26);
       const topOffset = headerHeight;
+      timeLabels.innerHTML = "";
 
       for (let h = startH; h <= endH; h++) {
         const label = document.createElement("div");
@@ -266,7 +354,7 @@
         const ampm = h >= 12 ? "PM" : "AM";
         const display = ((h + 11) % 12) + 1;
         label.textContent = `${display} ${ampm}`;
-        label.style.top = `${topOffset + (h - startH) * cellH * 2}px`; // every 2 cells = 1 hour
+        label.style.top = `${topOffset + (h - startH) * cellH * 2}px`;
         timeLabels.appendChild(label);
       }
 
@@ -286,10 +374,44 @@
       document.addEventListener("mouseup", () => (dragging = false));
     }
 
+    // Copy link
     document.getElementById("copyLink").addEventListener("click", () => {
       navigator.clipboard.writeText(window.location.href);
       alert("Link copied to clipboard!");
     });
+
+    // Add availability modal
+    const modal = document.getElementById("nameModal");
+    const addBtn = document.getElementById("addAvailability");
+    const saveBtn = document.getElementById("saveAvailability");
+    const nameInput = document.getElementById("userName");
+
+    addBtn.addEventListener("click", () => {
+      modal.classList.add("show");
+      nameInput.focus();
+    });
+
+    saveBtn.addEventListener("click", () => {
+      const name = nameInput.value.trim();
+      if (!name) {
+        nameInput.style.borderColor = "#e57373";
+        nameInput.focus();
+        return;
+      }
+
+      const selected = [...document.querySelectorAll(".cell.active")].map((c, i) => i);
+      const eventKey = eventData?.title || "defaultEvent";
+      responses[eventKey] = responses[eventKey] || [];
+      responses[eventKey].push({ name, selected });
+      localStorage.setItem("responses", JSON.stringify(responses));
+
+      modal.classList.remove("show");
+      nameInput.value = "";
+      document.querySelectorAll(".cell").forEach(c => c.classList.remove("active"));
+      renderResponses();
+    });
+
+    renderResponses();
   </script>
 </body>
 </html>
