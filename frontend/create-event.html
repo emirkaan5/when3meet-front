@@ -1,3 +1,5 @@
+<!-- create-event page -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -196,7 +198,7 @@
     <div class="calendar" id="calendar"></div>
 
     <div class="actions">
-      <button class="cancel-btn" onclick="window.location.href='index.html'">Cancel</button>
+      <button class="cancel-btn" onclick="window.location.href='home.html'">Cancel</button>
       <button class="create-btn" id="createBtn">Create</button>
     </div>
   </div>
@@ -295,7 +297,7 @@
       };
 
       localStorage.setItem("eventData", JSON.stringify(eventData));
-      window.location.href = "manual.html";
+      window.location.href = "calendar.html";
     });
 
     document.addEventListener("keydown", e => {
