@@ -1,4 +1,20 @@
+<!-- 
+    Authenticating users. 
+    User either authenticates through google sign-in
+    OR
+    through putting in their email and password for the website
+    
+    TODOs: (order in priority)
+
+    - Connect to the backend for user authentication (done through adding functions in login button)
+    - Implement a Register page to create a new user profile and link it to "Register"
+    - Implementing Sign in with Google
+    - Implement password recovery through "Forgot your password?"
+    - Implement error handling for invalid inputs.
+
+-->
 <!-- log in page -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -34,6 +50,46 @@
             padding: 40px 16px 100px;
             position: relative;
             overflow-x: hidden;
+        }
+
+        h2 {
+            font-size: 24px;
+            /* Adjust the font size */
+            font-weight: 600;
+            /* Adjust the font weight */
+            color: var(--purple-dark);
+            /* Use the purple-dark variable for color */
+            margin-bottom: 16px;
+            /* Add spacing below the heading */
+            text-align: center;
+            /* Center the text */
+        }
+
+        /* Style for all anchor tags */
+        a {
+            color: #a46bae;
+            /* Change link color */
+            text-decoration: none;
+            /* Remove underline */
+            font-size: 15px;
+        }
+
+        /* Add hover effect for links */
+        a:hover {
+            color: #8a5797;
+            /* Change color on hover */
+            text-decoration: underline;
+            /* Add underline on hover */
+        }
+
+        /* Style for the paragraph */
+        p {
+            color: gray;
+            /* Change text color */
+            margin: 5px 0;
+            /* Add vertical spacing */
+            font-size: 15px;
+            /* Adjust font size */
         }
 
         .bottom-flowers {
@@ -90,18 +146,7 @@
             margin: 0;
         }
 
-        h2 {
-            font-size: 24px;
-            /* Adjust the font size */
-            font-weight: 600;
-            /* Adjust the font weight */
-            color: var(--purple-dark);
-            /* Use the purple-dark variable for color */
-            margin-bottom: 16px;
-            /* Add spacing below the heading */
-            text-align: center;
-            /* Center the text */
-        }
+
 
         /* Login form styles */
         .login-form {
@@ -137,14 +182,27 @@
             background: var(--purple-dark);
         }
 
+        /* Style for the separator */
         .separator {
-        border: none; /* Remove default border */
-        border-top: 1px solid var(--purple-light); /* Add a light purple line */
-        margin: 16px 0; /* Add spacing above and below */
-        }   
+            border: none;
+            height: 2px;
+            /* Set the thickness of the line */
+            background-color: #00000037;
+            /* Set the color of the line */
+            width: 100%;
+            /* Ensure it spans the full width of its container */
+            margin: 5px 0;
+            /* Add spacing above and below */
+        }
+
+        .g-btn{
+            display: flex; /* BEGIN: Centering the button */
+            justify-content: center;
+            align-items: center;
+        }
     </style>
 
-        
+
 </head>
 
 <body>
@@ -161,11 +219,76 @@
         <h2> Log In</h2>
         <form class="login-form">
             <input type="text" placeholder="Email" required />
-            <input type="password" placeholder="Password" required />
-            <button type="submit">Login</button>
-            <hr class="separator" />
+            <input type="password" id="password" placeholder="Password" required />
+            <button type="button" id="login-btn">Log In</button>
             <a href="#">Forgot your password?</a>
             <p>Not a user? <a href="#">Register</a></p>
+            <hr class="separator" />
+            <!-- 1) Container where Google renders the button -->
+            <div id="g-btn" class="g-btn"></div>
         </form>
     </div>
+
+
+
+    <!-- 2) Load the Google Identity Services script -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <script>
+        // 3) When the script loads, initialize and render the button
+        window.onload = function () {
+            google.accounts.id.initialize({
+                client_id: "YOUR_GOOGLE_OAUTH_CLIENT_ID",
+                callback: handleCredentialResponse, // receives ID token
+                ux_mode: "popup" // or "redirect"
+            });
+
+            // Render a standard "Sign in with Google" button
+            google.accounts.id.renderButton(
+                document.getElementById("g-btn"),
+                {
+                    type: "standard",      // standard | icon
+                    theme: "outline",      // outline matches your screenshot
+                    size: "large",         // small | medium | large
+                    text: "signin_with",   // "Sign in with Google"
+                    shape: "rectangular",
+                    logo_alignment: "left",
+                    width: 260
+                }
+            );
+        };
+
+        // 4) Send the ID token to your backend to create a session
+        function handleCredentialResponse(response) {
+            // response.credential is a JWT ID token
+            fetch("/api/auth/google-id-token", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id_token: response.credential })
+            }).then(() => location.reload());
+        }
+
+        // Redirect to event creation form
+        document.getElementById("login-btn").addEventListener("click", () => {
+            // TODO: submit the information to backend for verification
+            const email = document.querySelector('.login-form input[type="text"]').value;
+            const password = document.querySelector('.login-form input[type="password"]').value;
+
+            if (email && password) {
+                window.location.href = "home.html";
+            } else {
+                alert("Please fill in both email and password.");
+            }
+        });
+
+        document.getElementById('password').addEventListener("keydown", (event) => {
+            if (event.code === "Enter") {
+                document.getElementById("login-btn").click();
+            }
+        });
+
+        document.getElementById("google-signin").addEventListener("click", () => {
+            // TODO: handle authentication through Google
+        })
+    </script>
 </body>
