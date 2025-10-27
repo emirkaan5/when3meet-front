@@ -1,3 +1,5 @@
+<!-- page for filling availability -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -123,6 +125,7 @@
     }
 
     .cell.active { background: var(--active); }
+    .cell.imported { background: var(--active); }
     .cell:last-child { border-bottom: none; }
 
     .sidebar { padding-top: 48px; }
@@ -237,11 +240,20 @@
           <h1 id="eventName">Loading...</h1>
           <span id="eventDates">--</span>
         </div>
-        <div class="header-right">
-          <button class="btn" id="copyLink">Copy link</button>
-          <button class="btn primary" id="addAvailability">Add availability</button>
-        </div>
-      </div>
+         <div class="header-right">
+           <button class="btn" id="copyLink">Copy link</button>
+           <button class="btn primary" id="addAvailability">Add availability</button>
+           <button class="btn primary" id="importAvailability" title="Import availability">
+             <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="16" height="16" style="vertical-align: middle; margin-right: 8px;">
+               <path fill="#EA4335" d="M24 9.5c3.54 0 6.73 1.22 9.24 3.6l6.91-6.91C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.18l8.02 6.22C12.14 13.73 17.56 9.5 24 9.5z"/>
+               <path fill="#34A853" d="M46.5 24c0-1.64-.16-3.21-.46-4.73H24v9.06h12.7c-.55 2.96-2.19 5.47-4.67 7.16l7.14 5.54C43.96 37.18 46.5 31.03 46.5 24z"/>
+               <path fill="#4285F4" d="M24 46.5c6.37 0 11.73-2.1 15.64-5.57l-7.14-5.54c-2 1.35-4.58 2.14-8.5 2.14-6.44 0-11.86-4.23-13.42-9.9l-8.02 6.22C6.51 42.62 14.62 46.5 24 46.5z"/>
+               <path fill="#FBBC05" d="M10.58 27.63C10.18 26.3 10 24.91 10 23.5s.18-2.8.58-4.13L2.56 13.18C1.2 15.86.5 19.09.5 23.5s.7 7.64 2.06 10.32l8.02-6.19z"/>
+             </svg>
+             Import availability
+           </button>
+         </div>
+       </div>
 
       <div class="schedule">
         <div class="time-labels" id="timeLabels"></div>
@@ -277,7 +289,21 @@
     </div>
   </div>
 
+  <!-- Google API Client Library -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+
   <script>
+    // Google Calendar API Configuration
+    const GOOGLE_CLIENT_ID = '1001839997214-8n0b2cs605n52ltdri13ccgqnct2furc.apps.googleusercontent.com';
+    const GOOGLE_API_KEY = 'AIzaSyCGnUe0eCtxp77DTEjbo8a-oM_Jn-EuCl8';
+    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
+    const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
+
+    let tokenClient;
+    let gapiInited = false;
+    let gisInited = false;
+
     const eventData = JSON.parse(localStorage.getItem("eventData"));
     const responses = JSON.parse(localStorage.getItem("responses") || "{}");
 
@@ -313,7 +339,7 @@
       const startH = parseInt(startTime.split(":")[0]);
       const endH = parseInt(endTime.split(":")[0]);
       const hours = endH - startH;
-      const totalCells = hours * 2;
+      const totalCells = hours * 4;
 
       const dayColumns = document.getElementById("dayColumns");
       dayColumns.innerHTML = "";
@@ -354,7 +380,7 @@
         const ampm = h >= 12 ? "PM" : "AM";
         const display = ((h + 11) % 12) + 1;
         label.textContent = `${display} ${ampm}`;
-        label.style.top = `${topOffset + (h - startH) * cellH * 2}px`;
+        label.style.top = `${topOffset + (h - startH) * cellH * 4}px`;
         timeLabels.appendChild(label);
       }
 
@@ -412,6 +438,209 @@
     });
 
     renderResponses();
+
+    // ===== Google Calendar API Integration =====
+
+    // Initialize Google API Client
+    function gapiLoaded() {
+      gapi.load('client', initializeGapiClient);
+    }
+
+    async function initializeGapiClient() {
+      await gapi.client.init({
+        apiKey: GOOGLE_API_KEY,
+        discoveryDocs: [DISCOVERY_DOC],
+      });
+      gapiInited = true;
+      maybeEnableButtons();
+    }
+
+    // Initialize Google Identity Services
+    function gisLoaded() {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: SCOPES,
+        callback: '', // defined later
+        error_callback: (error) => {
+          console.error('Google OAuth error:', error);
+
+          // Handle different error types
+          if (error.type === 'popup_closed') {
+            // User closed the popup - this is expected behavior, just inform them
+            console.log('User closed the authentication popup');
+          } else if (error.type === 'popup_failed_to_open') {
+            alert('Could not open Google sign-in popup. Please check if your browser is blocking popups and try again.');
+          } else {
+            alert(`Authentication error: ${error.type || 'Unknown error'}. Please try again or check the console for details.`);
+          }
+        },
+      });
+      gisInited = true;
+      maybeEnableButtons();
+    }
+
+    function maybeEnableButtons() {
+      if (gapiInited && gisInited) {
+        document.getElementById('importAvailability').disabled = false;
+      }
+    }
+
+    // Handle Import Availability Button Click
+    const importBtn = document.getElementById('importAvailability');
+    importBtn.addEventListener('click', handleAuthClick);
+
+    async function handleAuthClick() {
+      const originalText = importBtn.innerHTML;
+
+      tokenClient.callback = async (resp) => {
+        if (resp.error !== undefined) {
+          console.error('Error during authentication:', resp);
+          alert('Failed to authenticate with Google. Please try again.');
+          importBtn.innerHTML = originalText;
+          return;
+        }
+
+        // Show loading state
+        importBtn.innerHTML = '⏳ Loading calendar...';
+        importBtn.disabled = true;
+
+        try {
+          await importCalendarAvailability();
+        } finally {
+          // Restore button
+          importBtn.innerHTML = originalText;
+          importBtn.disabled = false;
+        }
+      };
+
+      if (gapi.client.getToken() === null) {
+        // Prompt the user to select a Google Account and ask for consent
+        console.log('Opening Google sign-in popup...');
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+      } else {
+        // Skip display of account chooser and consent dialog for an existing session.
+        tokenClient.requestAccessToken({ prompt: '' });
+      }
+    }
+
+    async function importCalendarAvailability() {
+      try {
+        if (!eventData) {
+          alert('No event data found. Please create an event first.');
+          return;
+        }
+
+        const { selectedDays, month, year, startTime, endTime } = eventData;
+
+        // Calculate date range from selected days
+        const firstDay = Math.min(...selectedDays);
+        const lastDay = Math.max(...selectedDays);
+        const timeMin = new Date(year, month, firstDay);
+        timeMin.setHours(0, 0, 0, 0);
+        const timeMax = new Date(year, month, lastDay);
+        timeMax.setHours(23, 59, 59, 999);
+
+        // Fetch calendar events
+        const response = await gapi.client.calendar.events.list({
+          'calendarId': 'primary',
+          'timeMin': timeMin.toISOString(),
+          'timeMax': timeMax.toISOString(),
+          'showDeleted': false,
+          'singleEvents': true,
+          'orderBy': 'startTime'
+        });
+
+        const events = response.result.items;
+
+        if (!events || events.length === 0) {
+          alert('No events found in your calendar for the selected dates.');
+          return;
+        }
+
+        // Mark calendar events on the grid
+        markFreeTimeSlots(events);
+        alert(`Successfully imported ${events.length} events from your Google Calendar!`);
+
+      } catch (err) {
+        console.error('Error fetching calendar events:', err);
+        alert('Failed to import calendar availability. Please try again.');
+      }
+    }
+
+    function markFreeTimeSlots(events) {
+      const { selectedDays, month, year, startTime, endTime } = eventData;
+      const startH = parseInt(startTime.split(":")[0]);
+      const endH = parseInt(endTime.split(":")[0]);
+
+      // Get all day grids
+      const dayGrids = document.querySelectorAll('.day-grid');
+
+      // First, create a map to track busy time slots for each day
+      const busySlots = new Map();
+
+      events.forEach(event => {
+        // Skip all-day events
+        if (!event.start.dateTime || !event.end.dateTime) {
+          return;
+        }
+
+        const eventStart = new Date(event.start.dateTime);
+        const eventEnd = new Date(event.end.dateTime);
+
+        // Find which day column this event belongs to
+        selectedDays.forEach((dayNum, dayIndex) => {
+          // Check if event occurs on this day
+          if (eventStart.getDate() === dayNum &&
+              eventStart.getMonth() === month &&
+              eventStart.getFullYear() === year) {
+
+            const eventStartHour = eventStart.getHours() + eventStart.getMinutes() / 60;
+            const eventEndHour = eventEnd.getHours() + eventEnd.getMinutes() / 60;
+
+            // Only track slots within the grid's time range
+            if (eventEndHour > startH && eventStartHour < endH) {
+              // Calculate which cells are busy (15-minute slots = 4 per hour)
+              const startSlot = Math.max(0, Math.floor((eventStartHour - startH) * 4));
+              const endSlot = Math.min((endH - startH) * 4, Math.ceil((eventEndHour - startH) * 4));
+
+              // Initialize busy slots array for this day if not exists
+              if (!busySlots.has(dayIndex)) {
+                busySlots.set(dayIndex, new Set());
+              }
+
+              // Mark these slots as busy
+              for (let i = startSlot; i < endSlot; i++) {
+                busySlots.get(dayIndex).add(i);
+              }
+            }
+          }
+        });
+      });
+
+      // Now mark all FREE time slots (slots NOT in busySlots)
+      dayGrids.forEach((grid, dayIndex) => {
+        const cells = grid.querySelectorAll('.cell');
+        const busySlotsForDay = busySlots.get(dayIndex) || new Set();
+
+        cells.forEach((cell, slotIndex) => {
+          // If this slot is NOT busy, mark it as available (free)
+          if (!busySlotsForDay.has(slotIndex)) {
+            cell.classList.add('active', 'imported');
+            cell.title = 'Available (from calendar)';
+          }
+        });
+      });
+    }
+
+    // Initialize Google APIs when page loads
+    window.addEventListener('load', () => {
+      if (typeof gapi !== 'undefined') {
+        gapiLoaded();
+      }
+      if (typeof google !== 'undefined') {
+        gisLoaded();
+      }
+    });
   </script>
 </body>
 </html>

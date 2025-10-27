@@ -1,89 +1,128 @@
+<!-- 
+    Authenticating users. 
+    User either authenticates through google sign-in
+    OR
+    through putting in their email and password for the website
+    
+    TODOs: (order in priority)
+
+    - Connect to the backend for user authentication (done through adding functions in login button)
+    - Implement a Register page to create a new user profile and link it to "Register"
+    - Implementing Sign in with Google
+    - Implement password recovery through "Forgot your password?"
+    - Implement error handling for invalid inputs.
+
+-->
+<!-- log in page -->
+
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>When3Meet – My Meetings</title>
-  <style>
-    :root {
-      --purple: #a46bae;
-      --purple-dark: #8a5797;
-      --bg: #fafafa;
-      --text: #1a1a1a;
-      --muted: #6b7280;
-      --card-bg: #fff;
-      --border: #e5e7eb;
-      --radius: 14px;
-    }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>When3Meet – Login</title>
+    <style>
+        :root {
+            --purple: #a46bae;
+            --purple-dark: #8a5797;
+            --bg: #fafafa;
+            --text: #1a1a1a;
+            --muted: #6b7280;
+            --card-bg: #fff;
+            --border: #e5e7eb;
+            --radius: 14px;
+        }
 
-    * {
-      box-sizing: border-box;
-    }
+        * {
+            box-sizing: border-box;
+        }
 
-    body {
-      margin: 0;
-      font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-      color: var(--text);
-      background: var(--bg);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-      padding: 40px 16px 100px;
-      position: relative;
-      overflow-x: hidden;
-    }
+        body {
+            margin: 0;
+            font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 40px 16px 100px;
+            position: relative;
+            overflow-x: hidden;
+        }
 
-    /* Bottom lavender decoration */
-    .bottom-flowers {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100vw;
-      /* Fill full screen width */
-      height: 520px;
-      object-fit: cover;
-      /* Stretch edge-to-edge horizontally */
-      pointer-events: none;
-      z-index: 0;
+        h2 {
+            font-size: 24px;
+            /* Adjust the font size */
+            font-weight: 600;
+            /* Adjust the font weight */
+            color: var(--purple-dark);
+            /* Use the purple-dark variable for color */
+            margin-bottom: 16px;
+            /* Add spacing below the heading */
+            text-align: center;
+            /* Center the text */
+        }
 
-      /* Soft pastel effect */
-      opacity: 0.85;
-      filter: brightness(1.15) contrast(0.95) saturate(0.9);
+        /* Style for all anchor tags */
+        a {
+            color: #a46bae;
+            /* Change link color */
+            text-decoration: none;
+            /* Remove underline */
+            font-size: 15px;
+        }
 
-      /* Gentle fade upward for natural blending */
-      mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 75%, rgba(0, 0, 0, 0) 100%);
-      -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 75%, rgba(0, 0, 0, 0) 100%);
-    }
+        /* Add hover effect for links */
+        a:hover {
+            color: #8a5797;
+            /* Change color on hover */
+            text-decoration: underline;
+            /* Add underline on hover */
+        }
 
-    @media (max-width: 768px) {
-      .bottom-flowers {
-        opacity: 0.8;
-        filter: brightness(1.2);
-      }
-    }
+        /* Style for the paragraph */
+        p {
+            color: gray;
+            /* Change text color */
+            margin: 5px 0;
+            /* Add vertical spacing */
+            font-size: 15px;
+            /* Adjust font size */
+        }
 
+        .bottom-flowers {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100vw;
+            height: 520px;
+            object-fit: cover;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.85;
+            filter: brightness(1.15) contrast(0.95) saturate(0.9);
+            mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 75%, rgba(0, 0, 0, 0) 100%);
+            -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 75%, rgba(0, 0, 0, 0) 100%);
+        }
 
-    /* Main content */
-    .content {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+        @media (max-width: 768px) {
+            .bottom-flowers {
+                opacity: 0.8;
+                filter: brightness(1.2);
+            }
+        }
 
-    /* Header */
-    .header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      margin-bottom: 28px;
-      /* smaller gap for tighter visual flow */
-    }
+        .content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
+<<<<<<< HEAD
     .header img.logo {
       width: 65px;
       height: 65px;
@@ -92,183 +131,175 @@
       mix-blend-mode: multiply;
       image-rendering: -webkit-optimize-contrast;
     }
+=======
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+>>>>>>> 3ac0e3157d3e6bf2ab98e0e806a46aa855afaa8c
 
-    .header h1 {
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--purple-dark);
-      margin: 0;
-      letter-spacing: -0.5px;
-    }
+        .header img.logo {
+            width: 100px;
+            height: 100px;
+            border-radius: 12px;
+            background: transparent;
+            mix-blend-mode: multiply;
+            image-rendering: -webkit-optimize-contrast;
+        }
 
-
-
-    /* Create button */
-    .create-btn {
-      background: var(--purple);
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-      padding: 14px 28px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s ease, transform 0.1s ease;
-      box-shadow: 0 4px 10px rgba(164, 107, 174, 0.25);
-      margin-bottom: 26px;
-      /* slightly reduced space before empty-state */
-    }
-
-    .create-btn:hover {
-      background: var(--purple-dark);
-      transform: translateY(-2px);
-    }
-
-    /* Empty state */
-    .empty-state {
-      text-align: center;
-      color: var(--muted);
-      font-size: 15px;
-      margin-top: 10px;
-      /* smaller gap after button */
-    }
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--purple-dark);
+            margin: 0;
+        }
 
 
-    /* Meetings list */
-    .meetings-container {
-      width: min(800px, 95%);
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
 
-    .meeting-card {
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 20px 24px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
-      transition: box-shadow 0.2s ease, transform 0.2s ease;
-    }
+        /* Login form styles */
+        .login-form {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 300px;
+        }
 
-    .meeting-card:hover {
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-      transform: translateY(-2px);
-    }
+        .login-form input {
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 16px;
+        }
 
-    .meeting-title {
-      font-size: 18px;
-      font-weight: 600;
-      margin: 0 0 4px;
-      color: var(--text);
-    }
+        .login-form button {
+            padding: 10px;
+            background: var(--purple);
+            color: white;
+            border: none;
+            border-radius: var(--radius);
+            cursor: pointer;
+            font-size: 16px;
+        }
 
-    .meeting-dates {
-      font-size: 14px;
-      color: var(--muted);
-      margin-bottom: 12px;
-    }
+        .login-form button:hover {
+            background: var(--purple-dark);
+        }
 
-    .view-btn {
-      background: var(--purple);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 8px 16px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: background 0.2s ease;
-    }
+        /* Style for the separator */
+        .separator {
+            border: none;
+            height: 2px;
+            /* Set the thickness of the line */
+            background-color: #00000037;
+            /* Set the color of the line */
+            width: 100%;
+            /* Ensure it spans the full width of its container */
+            margin: 5px 0;
+            /* Add spacing above and below */
+        }
 
-    .view-btn:hover {
-      background: var(--purple-dark);
-    }
+        .g-btn{
+            display: flex; /* BEGIN: Centering the button */
+            justify-content: center;
+            align-items: center;
+        }
+    </style>
 
-    .empty-state {
-      text-align: center;
-      color: var(--muted);
-      font-size: 15px;
-      margin-top: 20px;
-    }
 
-    @media (max-width: 768px) {
-      .bottom-flowers {
-        display: none;
-      }
-    }
-  </style>
 </head>
 
 <body>
-  <!-- Bottom lavender field with gradient -->
-  <div class="bottom-decor">
-    <div class="flower-gradient"></div>
-    <img src="./src/assets/image.png" alt="Lavender Field" class="bottom-flowers" />
-  </div>
+    <div class="bottom-decor">
+        <div class="flower-gradient"></div>
+        <img src="./src/assets/image.png" alt="Lavender Field" class="bottom-flowers" />
+    </div>
+    <div class="content">
+        <header class="header">
+            <img src="./src/assets/logo.png" alt="When3Meet Logo" class="logo" />
+            <h1>When3Meet</h1>
 
-  <!-- Page content -->
-  <div class="content">
-    <header class="header">
-      <img src="./src/assets/logo.png" alt="When3Meet Logo" class="logo" />
-      <h1>When3Meet</h1>
-    </header>
+        </header>
+        <h2> Log In</h2>
+        <form class="login-form">
+            <input type="text" placeholder="Email" required />
+            <input type="password" id="password" placeholder="Password" required />
+            <button type="button" id="login-btn">Log In</button>
+            <a href="#">Forgot your password?</a>
+            <p>Not a user? <a href="#">Register</a></p>
+            <hr class="separator" />
+            <!-- 1) Container where Google renders the button -->
+            <div id="g-btn" class="g-btn"></div>
+        </form>
+    </div>
 
-    <button class="create-btn" id="createMeeting">+ Create New Meeting</button>
 
-    <section class="meetings-container" id="meetingsList"></section>
 
-    <p class="empty-state" id="emptyState">You don’t have any meetings yet.</p>
-  </div>
+    <!-- 2) Load the Google Identity Services script -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-  <script>
-    // Load meetings from localStorage
-    const storedEvents = JSON.parse(localStorage.getItem("savedEvents") || "[]");
-    const container = document.getElementById("meetingsList");
-    const emptyState = document.getElementById("emptyState");
+    <script>
+        // 3) When the script loads, initialize and render the button
+        window.onload = function () {
+            google.accounts.id.initialize({
+                client_id: "YOUR_GOOGLE_OAUTH_CLIENT_ID",
+                callback: handleCredentialResponse, // receives ID token
+                ux_mode: "popup" // or "redirect"
+            });
 
-    function renderMeetings() {
-      container.innerHTML = "";
-      if (storedEvents.length === 0) {
-        emptyState.style.display = "block";
-        return;
-      }
+            // Render a standard "Sign in with Google" button
+            google.accounts.id.renderButton(
+                document.getElementById("g-btn"),
+                {
+                    type: "standard",      // standard | icon
+                    theme: "outline",      // outline matches your screenshot
+                    size: "large",         // small | medium | large
+                    text: "signin_with",   // "Sign in with Google"
+                    shape: "rectangular",
+                    logo_alignment: "left",
+                    width: 260
+                }
+            );
+        };
 
-      emptyState.style.display = "none";
-      storedEvents.forEach((event) => {
-        const card = document.createElement("div");
-        card.className = "meeting-card";
+        // 4) Send the ID token to your backend to create a session
+        function handleCredentialResponse(response) {
+            // response.credential is a JWT ID token
+            fetch("/api/auth/google-id-token", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ id_token: response.credential })
+            }).then(() => location.reload());
+        }
 
-        const title = document.createElement("h3");
-        title.className = "meeting-title";
-        title.textContent = event.title || "Untitled Meeting";
+        // Redirect to event creation form
+        document.getElementById("login-btn").addEventListener("click", () => {
+            // TODO: submit the information to backend for verification
+            const email = document.querySelector('.login-form input[type="text"]').value;
+            const password = document.querySelector('.login-form input[type="password"]').value;
 
-        const dateRange = document.createElement("p");
-        dateRange.className = "meeting-dates";
-        dateRange.textContent = event.dateRange || "No date selected";
-
-        const viewBtn = document.createElement("button");
-        viewBtn.className = "view-btn";
-        viewBtn.textContent = "View Event";
-        viewBtn.addEventListener("click", () => {
-          localStorage.setItem("eventData", JSON.stringify(event));
-          window.location.href = "manual.html";
+            if (email && password) {
+                window.location.href = "home.html";
+            } else {
+                alert("Please fill in both email and password.");
+            }
         });
 
-        card.appendChild(title);
-        card.appendChild(dateRange);
-        card.appendChild(viewBtn);
-        container.appendChild(card);
-      });
-    }
+        document.getElementById('password').addEventListener("keydown", (event) => {
+            if (event.code === "Enter") {
+                document.getElementById("login-btn").click();
+            }
+        });
 
-    renderMeetings();
-
-    // Redirect to event creation form
-    document.getElementById("createMeeting").addEventListener("click", () => {
-      window.location.href = "create-event.html";
-    });
-  </script>
+        document.getElementById("google-signin").addEventListener("click", () => {
+            // TODO: handle authentication through Google
+        })
+    </script>
 </body>
-
-</html>
