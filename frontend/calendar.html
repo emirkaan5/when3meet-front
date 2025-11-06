@@ -151,8 +151,9 @@
     }
 
     .select {
-      border: none;
-      border-bottom: 1px solid #ddd;
+      border: 2px solid var(--purple);
+      border-radius: 6px;
+      /* border-bottom: 1px solid #ddd; */
       background: transparent;
       font-size: 13px;
       padding: 2px 0;
@@ -263,7 +264,50 @@
       <div class="timezone-bar">
         <span>Shown in</span>
         <select class="select">
-          <option>(GMT-4:00) Eastern Time (US & Canada)</option>
+          <!-- Americas -->
+          <option value="-12:00">UTC-12:00 — International Date Line West</option>
+          <option value="-11:00">UTC-11:00 — Samoa</option>
+          <option value="-10:00">UTC-10:00 — Hawaii</option>
+          <option value="-09:00">UTC-09:00 — Alaska</option>
+          <option value="-08:00">UTC-08:00 — Pacific Time (US & Canada)</option>
+          <option value="-07:00">UTC-07:00 — Mountain Time (US & Canada)</option>
+          <option value="-06:00">UTC-06:00 — Central Time (US & Canada)</option>
+          <option value="-05:00" selected>UTC-05:00 — Eastern Time (US & Canada)</option>
+          <option value="-04:00">UTC-04:00 — Atlantic Time (Canada)</option>
+          <option value="-03:30">UTC-03:30 — Newfoundland</option>
+          <option value="-03:00">UTC-03:00 — Brasilia, Buenos Aires</option>
+          <option value="-02:00">UTC-02:00 — Mid-Atlantic</option>
+          <option value="-01:00">UTC-01:00 — Azores</option>
+          
+          <!-- Europe & Africa -->
+          <option value="+00:00">UTC+00:00 — London, Lisbon, Dublin</option>
+          <option value="+01:00">UTC+01:00 — Paris, Berlin, Rome</option>
+          <option value="+02:00">UTC+02:00 — Athens, Cairo, Istanbul</option>
+          <option value="+03:00">UTC+03:00 — Moscow, Nairobi, Baghdad</option>
+          <option value="+03:30">UTC+03:30 — Tehran</option>
+          <option value="+04:00">UTC+04:00 — Dubai, Abu Dhabi</option>
+          <option value="+04:30">UTC+04:30 — Kabul</option>
+          
+          <!-- Asia -->
+          <option value="+05:00">UTC+05:00 — Islamabad, Karachi</option>
+          <option value="+05:30">UTC+05:30 — Mumbai, New Delhi</option>
+          <option value="+05:45">UTC+05:45 — Kathmandu</option>
+          <option value="+06:00">UTC+06:00 — Dhaka, Almaty</option>
+          <option value="+06:30">UTC+06:30 — Yangon</option>
+          <option value="+07:00">UTC+07:00 — Bangkok, Jakarta, Hanoi</option>
+          <option value="+08:00">UTC+08:00 — Beijing, Singapore, Hong Kong</option>
+          <option value="+08:45">UTC+08:45 — Eucla</option>
+          <option value="+09:00">UTC+09:00 — Tokyo, Seoul</option>
+          <option value="+09:30">UTC+09:30 — Adelaide, Darwin</option>
+          
+          <!-- Oceania -->
+          <option value="+10:00">UTC+10:00 — Sydney, Melbourne</option>
+          <option value="+10:30">UTC+10:30 — Lord Howe Island</option>
+          <option value="+11:00">UTC+11:00 — Solomon Islands</option>
+          <option value="+12:00">UTC+12:00 — Auckland, Fiji</option>
+          <option value="+12:45">UTC+12:45 — Chatham Islands</option>
+          <option value="+13:00">UTC+13:00 — Tonga</option>
+          <option value="+14:00">UTC+14:00 — Line Islands</option>
         </select>
         <select class="select">
           <option>12h</option>
@@ -307,6 +351,10 @@
     const eventData = JSON.parse(localStorage.getItem("eventData"));
     const responses = JSON.parse(localStorage.getItem("responses") || "{}");
 
+    // Store the original timezone offset (EST is UTC-5:00)
+    const originalTimezoneOffset = -5; // Change this to match your event's original timezone TIME BE MADE A VARIABLE
+    let currentTimezoneOffset = -5; // Default display timezone (Atlantic Time UTC-4:00)
+  
     function renderResponses() {
       const list = document.getElementById("responseList");
       const header = document.getElementById("responseHeader");
