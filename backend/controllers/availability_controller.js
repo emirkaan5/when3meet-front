@@ -1,6 +1,6 @@
 // controllers/availabilityController.js
-const Event = require('../db_schema/event_model');
-const Availability = require('../db_schema/availability_model');
+const Event = require('../models/event_model');
+const Availability = require('../models/availability_model');
 
 exports.upsertAvailability = async (req, res) => {
   try {

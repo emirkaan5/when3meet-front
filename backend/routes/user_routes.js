@@ -1,17 +1,17 @@
 const router = require("express").Router();
-const userCtrl = require("../controllers/user_controller");
+const userCtrl = require("../controllers/user_controllers");
 
-router.post("/register", userCtrl.createUser);
-router.post("/login", userCtrl.loginUser);
-router.get("/:id", userCtrl.getUserById);
+router.post("/register", userCtrl.createUser); // POST /users/register
+router.post("/login", userCtrl.loginUser);     // POST /users/login
+router.get("/:id", userCtrl.getUserById);      // POST /users/:id
 
-router.get("/", (req, res) => {
+router.get("/", (req, res) => {                // GET /users/
   res.status(200).json({ message: "User API connected successfully" });
 });
 
 module.exports = router;
 
-```
+/*
 ## Key Security Features:
 
 1. **Bcrypt Hashing**: Passwords are hashed using bcrypt with a salt factor of 10
@@ -37,4 +37,4 @@ Body: {
   "email": "john@example.com",
   "password": "mySecurePass123"
 }
-```
+*/

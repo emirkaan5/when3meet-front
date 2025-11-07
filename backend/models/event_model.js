@@ -1,10 +1,11 @@
 const { Schema, model, Types } = require("mongoose");
+const ObjectId = Types.ObjectId;
 
 const Event = new Schema(
   {
     title: { type: String, required: true },
     description: String,
-    creator: { type: String, required: true, lowercase: true, trim: true },
+    creator: { type: ObjectId, ref:"User",required: true},
     window: {
       start: { type: Date, required: true },
       end: { type: Date, required: true },
@@ -12,7 +13,7 @@ const Event = new Schema(
     // time range
     participants: [
       {
-        email: { type: String, lowercase: true, trim: true },
+        user: { type: ObjectId, ref:"User" },
       },
     ],
     // record users who have filled availability

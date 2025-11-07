@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 
 const User = new Schema(
   {
-    username: {
+    userName: {
       type: String,
       required: [true, "Username is required"],
       unique: true,
@@ -22,6 +22,9 @@ const User = new Schema(
       type: String,
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
+          // new properties
+      loginAttempts: { type: Number, required: true, default: 0 },
+      lockUntil: { type: Number }
     },
   },
   {
@@ -50,4 +53,4 @@ User.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-module.exports = model("User", userSchema);
+module.exports = model("User", User);
