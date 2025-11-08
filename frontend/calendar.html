@@ -1,0 +1,694 @@
+<!-- page for filling availability -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>When3Meet – Add Availability</title>
+  <style>
+    :root {
+      --purple: #996899;
+      --border: #e6e6f0;
+      --text: #1a1a1a;
+      --muted: #6b7280;
+      --gridline: #f0f0fa;
+      --active: #E3C5E3;
+      --col-width: 180px;
+      --cell-h: 26px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--text);
+      background: #fafafa;
+      display: flex;
+      justify-content: center;
+      padding: 48px 0;
+    }
+
+    .container {
+      width: min(1100px, 96vw);
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 40px;
+    }
+
+    .main {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px 40px 36px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .header-left h1 { margin: 0; font-size: 22px; font-weight: 600; }
+    .header-left span { color: var(--muted); font-size: 14px; }
+    .header-right { display: flex; gap: 10px; }
+
+    .btn {
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border: 1px solid #ccc;
+      background: #fff;
+      color: #333;
+      transition: background 0.2s;
+    }
+
+    .btn:hover { background: #f2f2f2; }
+    .btn.primary { background: var(--purple); color: #fff; border: none; }
+    .btn.primary:hover { background: #c38bc3; }
+
+    .schedule {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      align-items: start;
+      column-gap: 36px;
+    }
+
+    .time-labels {
+      position: relative;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .time-label {
+      position: absolute;
+      right: 0;
+      transform: translateY(-50%);
+      font-weight: 500;
+    }
+
+    .day-columns {
+      display: flex;
+      gap: 36px;
+      overflow-x: auto;
+    }
+
+    .day-column {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      width: var(--col-width);
+    }
+
+    .day-header { text-align: center; margin-bottom: 8px; }
+    .day-header span { display: block; color: var(--muted); font-size: 13px; }
+    .day-header h3 { margin: 2px 0 0; font-size: 15px; font-weight: 600; }
+
+    .day-grid {
+      display: grid;
+      grid-auto-rows: var(--cell-h);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fff;
+      width: 100%;
+    }
+
+    .cell {
+      border-bottom: 1px solid var(--gridline);
+      background: #fff;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .cell.active { background: var(--active); }
+    .cell.imported { background: var(--active); }
+    .cell:last-child { border-bottom: none; }
+
+    .sidebar { padding-top: 48px; }
+    .responses-box {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 14px;
+    }
+
+    .responses-box h3 { margin: 0 0 8px; font-size: 15px; font-weight: 500; }
+    .muted { color: var(--muted); font-size: 13px; }
+
+    .timezone-bar {
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      gap: 12px;
+      margin-top: 18px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .select {
+      border: 2px solid var(--purple);
+      border-radius: 6px;
+      /* border-bottom: 1px solid #ddd; */
+      background: transparent;
+      font-size: 13px;
+      padding: 2px 0;
+      color: var(--muted);
+    }
+
+    /* Modern Modal */
+    .modal {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.25);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      visibility: hidden;
+      opacity: 0;
+      transition: opacity 0.25s ease, visibility 0.25s ease;
+      z-index: 1000;
+    }
+
+    .modal.show {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    .modal-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 32px 32px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+      width: 340px;
+      text-align: center;
+      animation: fadeInUp 0.25s ease;
+    }
+
+    .modal-card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+
+    .modal-card input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #dcdcdc;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 20px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .modal-card input:focus {
+      outline: none;
+      border-color: var(--purple);
+      box-shadow: 0 0 0 3px rgba(218,167,218,0.2);
+    }
+
+    .modal-card button {
+      width: 100%;
+      background: var(--purple);
+      border: none;
+      color: #fff;
+      padding: 10px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .modal-card button:hover { background: #c38bc3; }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="main">
+      <div class="header">
+        <div class="header-left">
+          <h1 id="eventName">Loading...</h1>
+          <span id="eventDates">--</span>
+        </div>
+         <div class="header-right">
+           <button class="btn" id="copyLink">Copy link</button>
+           <button class="btn primary" id="addAvailability">Add availability</button>
+           <button class="btn primary" id="importAvailability" title="Import availability">
+             <svg class="icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="16" height="16" style="vertical-align: middle; margin-right: 8px;">
+               <path fill="#EA4335" d="M24 9.5c3.54 0 6.73 1.22 9.24 3.6l6.91-6.91C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.18l8.02 6.22C12.14 13.73 17.56 9.5 24 9.5z"/>
+               <path fill="#34A853" d="M46.5 24c0-1.64-.16-3.21-.46-4.73H24v9.06h12.7c-.55 2.96-2.19 5.47-4.67 7.16l7.14 5.54C43.96 37.18 46.5 31.03 46.5 24z"/>
+               <path fill="#4285F4" d="M24 46.5c6.37 0 11.73-2.1 15.64-5.57l-7.14-5.54c-2 1.35-4.58 2.14-8.5 2.14-6.44 0-11.86-4.23-13.42-9.9l-8.02 6.22C6.51 42.62 14.62 46.5 24 46.5z"/>
+               <path fill="#FBBC05" d="M10.58 27.63C10.18 26.3 10 24.91 10 23.5s.18-2.8.58-4.13L2.56 13.18C1.2 15.86.5 19.09.5 23.5s.7 7.64 2.06 10.32l8.02-6.19z"/>
+             </svg>
+             Import availability
+           </button>
+         </div>
+       </div>
+
+      <div class="schedule">
+        <div class="time-labels" id="timeLabels"></div>
+        <div class="day-columns" id="dayColumns"></div>
+      </div>
+
+      <div class="timezone-bar">
+        <span>Shown in</span>
+        <select class="select">
+          <!-- Americas -->
+          <option value="-12:00">UTC-12:00 — International Date Line West</option>
+          <option value="-11:00">UTC-11:00 — Samoa</option>
+          <option value="-10:00">UTC-10:00 — Hawaii</option>
+          <option value="-09:00">UTC-09:00 — Alaska</option>
+          <option value="-08:00">UTC-08:00 — Pacific Time (US & Canada)</option>
+          <option value="-07:00">UTC-07:00 — Mountain Time (US & Canada)</option>
+          <option value="-06:00">UTC-06:00 — Central Time (US & Canada)</option>
+          <option value="-05:00" selected>UTC-05:00 — Eastern Time (US & Canada)</option>
+          <option value="-04:00">UTC-04:00 — Atlantic Time (Canada)</option>
+          <option value="-03:30">UTC-03:30 — Newfoundland</option>
+          <option value="-03:00">UTC-03:00 — Brasilia, Buenos Aires</option>
+          <option value="-02:00">UTC-02:00 — Mid-Atlantic</option>
+          <option value="-01:00">UTC-01:00 — Azores</option>
+          
+          <!-- Europe & Africa -->
+          <option value="+00:00">UTC+00:00 — London, Lisbon, Dublin</option>
+          <option value="+01:00">UTC+01:00 — Paris, Berlin, Rome</option>
+          <option value="+02:00">UTC+02:00 — Athens, Cairo, Istanbul</option>
+          <option value="+03:00">UTC+03:00 — Moscow, Nairobi, Baghdad</option>
+          <option value="+03:30">UTC+03:30 — Tehran</option>
+          <option value="+04:00">UTC+04:00 — Dubai, Abu Dhabi</option>
+          <option value="+04:30">UTC+04:30 — Kabul</option>
+          
+          <!-- Asia -->
+          <option value="+05:00">UTC+05:00 — Islamabad, Karachi</option>
+          <option value="+05:30">UTC+05:30 — Mumbai, New Delhi</option>
+          <option value="+05:45">UTC+05:45 — Kathmandu</option>
+          <option value="+06:00">UTC+06:00 — Dhaka, Almaty</option>
+          <option value="+06:30">UTC+06:30 — Yangon</option>
+          <option value="+07:00">UTC+07:00 — Bangkok, Jakarta, Hanoi</option>
+          <option value="+08:00">UTC+08:00 — Beijing, Singapore, Hong Kong</option>
+          <option value="+08:45">UTC+08:45 — Eucla</option>
+          <option value="+09:00">UTC+09:00 — Tokyo, Seoul</option>
+          <option value="+09:30">UTC+09:30 — Adelaide, Darwin</option>
+          
+          <!-- Oceania -->
+          <option value="+10:00">UTC+10:00 — Sydney, Melbourne</option>
+          <option value="+10:30">UTC+10:30 — Lord Howe Island</option>
+          <option value="+11:00">UTC+11:00 — Solomon Islands</option>
+          <option value="+12:00">UTC+12:00 — Auckland, Fiji</option>
+          <option value="+12:45">UTC+12:45 — Chatham Islands</option>
+          <option value="+13:00">UTC+13:00 — Tonga</option>
+          <option value="+14:00">UTC+14:00 — Line Islands</option>
+        </select>
+        <select class="select">
+          <option>12h</option>
+          <option>24h</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sidebar">
+      <div class="responses-box">
+        <h3 id="responseHeader">Responses (0/0)</h3>
+        <ul id="responseList" class="muted" style="padding-left: 18px; margin: 8px 0 0;"></ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Beautiful name modal -->
+  <div class="modal" id="nameModal">
+    <div class="modal-card">
+      <h3>Enter your name</h3>
+      <input type="text" id="userName" placeholder="Your name" />
+      <button id="saveAvailability">Save my availability</button>
+    </div>
+  </div>
+
+  <!-- Google API Client Library -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+
+  <script>
+    // Google Calendar API Configuration
+    const GOOGLE_CLIENT_ID = '1001839997214-8n0b2cs605n52ltdri13ccgqnct2furc.apps.googleusercontent.com';
+    const GOOGLE_API_KEY = 'AIzaSyCGnUe0eCtxp77DTEjbo8a-oM_Jn-EuCl8';
+    const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
+    const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
+
+    let tokenClient;
+    let gapiInited = false;
+    let gisInited = false;
+
+    const eventData = JSON.parse(localStorage.getItem("eventData"));
+    const responses = JSON.parse(localStorage.getItem("responses") || "{}");
+
+    // Store the original timezone offset (EST is UTC-5:00)
+    const originalTimezoneOffset = -5; // Change this to match your event's original timezone TIME BE MADE A VARIABLE
+    let currentTimezoneOffset = -5; // Default display timezone (Atlantic Time UTC-4:00)
+  
+    function renderResponses() {
+      const list = document.getElementById("responseList");
+      const header = document.getElementById("responseHeader");
+      const eventKey = eventData?.title || "defaultEvent";
+      const eventResponses = responses[eventKey] || [];
+      list.innerHTML = "";
+
+      eventResponses.forEach(r => {
+        const li = document.createElement("li");
+        li.textContent = r.name;
+        list.appendChild(li);
+      });
+
+      header.textContent = `Responses (${eventResponses.length}/${eventResponses.length})`;
+    }
+
+    if (eventData) {
+      const { title, startTime, endTime, selectedDays, month, year } = eventData;
+      document.getElementById("eventName").textContent = title;
+
+      const firstDate = new Date(year, month, Math.min(...selectedDays));
+      const lastDate = new Date(year, month, Math.max(...selectedDays));
+      document.getElementById("eventDates").textContent =
+        firstDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) +
+        (selectedDays.length > 1
+          ? " – " +
+            lastDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+          : "");
+
+      const startH = parseInt(startTime.split(":")[0]);
+      const endH = parseInt(endTime.split(":")[0]);
+      const hours = endH - startH;
+      const totalCells = hours * 4;
+
+      const dayColumns = document.getElementById("dayColumns");
+      dayColumns.innerHTML = "";
+      selectedDays.forEach(dayNum => {
+        const dateObj = new Date(year, month, dayNum);
+        const col = document.createElement("div");
+        col.className = "day-column";
+
+        const head = document.createElement("div");
+        head.className = "day-header";
+        const weekday = dateObj.toLocaleDateString("en-US", { weekday: "short" });
+        const monthDay = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        head.innerHTML = `<span>${monthDay}</span><h3>${weekday}</h3>`;
+        col.appendChild(head);
+
+        const grid = document.createElement("div");
+        grid.className = "day-grid";
+        for (let i = 0; i < totalCells; i++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          grid.appendChild(cell);
+        }
+        col.appendChild(grid);
+        dayColumns.appendChild(col);
+      });
+
+      // Align time labels
+      const timeLabels = document.getElementById("timeLabels");
+      const firstGrid = document.querySelector(".day-grid");
+      const headerHeight = document.querySelector(".day-header").offsetHeight + 8;
+      const cellH = parseFloat(getComputedStyle(firstGrid).getPropertyValue("--cell-h") || 26);
+      const topOffset = headerHeight;
+      timeLabels.innerHTML = "";
+
+      for (let h = startH; h <= endH; h++) {
+        const label = document.createElement("div");
+        label.className = "time-label";
+        const ampm = h >= 12 ? "PM" : "AM";
+        const display = ((h + 11) % 12) + 1;
+        label.textContent = `${display} ${ampm}`;
+        label.style.top = `${topOffset + (h - startH) * cellH * 4}px`;
+        timeLabels.appendChild(label);
+      }
+
+      // Drag-select
+      let dragging = false;
+      let addMode = true;
+      const toggle = c => c.classList[addMode ? "add" : "remove"]("active");
+
+      document.querySelectorAll(".cell").forEach(cell => {
+        cell.addEventListener("mousedown", () => {
+          dragging = true;
+          addMode = !cell.classList.contains("active");
+          toggle(cell);
+        });
+        cell.addEventListener("mouseenter", () => dragging && toggle(cell));
+      });
+      document.addEventListener("mouseup", () => (dragging = false));
+    }
+
+    // Copy link
+    document.getElementById("copyLink").addEventListener("click", () => {
+      navigator.clipboard.writeText(window.location.href);
+      alert("Link copied to clipboard!");
+    });
+
+    // Add availability modal
+    const modal = document.getElementById("nameModal");
+    const addBtn = document.getElementById("addAvailability");
+    const saveBtn = document.getElementById("saveAvailability");
+    const nameInput = document.getElementById("userName");
+
+    addBtn.addEventListener("click", () => {
+      modal.classList.add("show");
+      nameInput.focus();
+    });
+
+    saveBtn.addEventListener("click", () => {
+      const name = nameInput.value.trim();
+      if (!name) {
+        nameInput.style.borderColor = "#e57373";
+        nameInput.focus();
+        return;
+      }
+
+      const selected = [...document.querySelectorAll(".cell.active")].map((c, i) => i);
+      const eventKey = eventData?.title || "defaultEvent";
+      responses[eventKey] = responses[eventKey] || [];
+      responses[eventKey].push({ name, selected });
+      localStorage.setItem("responses", JSON.stringify(responses));
+
+      modal.classList.remove("show");
+      nameInput.value = "";
+      document.querySelectorAll(".cell").forEach(c => c.classList.remove("active"));
+      renderResponses();
+    });
+
+    renderResponses();
+
+    // ===== Google Calendar API Integration =====
+
+    // Initialize Google API Client
+    function gapiLoaded() {
+      gapi.load('client', initializeGapiClient);
+    }
+
+    async function initializeGapiClient() {
+      await gapi.client.init({
+        apiKey: GOOGLE_API_KEY,
+        discoveryDocs: [DISCOVERY_DOC],
+      });
+      gapiInited = true;
+      maybeEnableButtons();
+    }
+
+    // Initialize Google Identity Services
+    function gisLoaded() {
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: SCOPES,
+        callback: '', // defined later
+        error_callback: (error) => {
+          console.error('Google OAuth error:', error);
+
+          // Handle different error types
+          if (error.type === 'popup_closed') {
+            // User closed the popup - this is expected behavior, just inform them
+            console.log('User closed the authentication popup');
+          } else if (error.type === 'popup_failed_to_open') {
+            alert('Could not open Google sign-in popup. Please check if your browser is blocking popups and try again.');
+          } else {
+            alert(`Authentication error: ${error.type || 'Unknown error'}. Please try again or check the console for details.`);
+          }
+        },
+      });
+      gisInited = true;
+      maybeEnableButtons();
+    }
+
+    function maybeEnableButtons() {
+      if (gapiInited && gisInited) {
+        document.getElementById('importAvailability').disabled = false;
+      }
+    }
+
+    // Handle Import Availability Button Click
+    const importBtn = document.getElementById('importAvailability');
+    importBtn.addEventListener('click', handleAuthClick);
+
+    async function handleAuthClick() {
+      const originalText = importBtn.innerHTML;
+
+      tokenClient.callback = async (resp) => {
+        if (resp.error !== undefined) {
+          console.error('Error during authentication:', resp);
+          alert('Failed to authenticate with Google. Please try again.');
+          importBtn.innerHTML = originalText;
+          return;
+        }
+
+        // Show loading state
+        importBtn.innerHTML = '⏳ Loading calendar...';
+        importBtn.disabled = true;
+
+        try {
+          await importCalendarAvailability();
+        } finally {
+          // Restore button
+          importBtn.innerHTML = originalText;
+          importBtn.disabled = false;
+        }
+      };
+
+      if (gapi.client.getToken() === null) {
+        // Prompt the user to select a Google Account and ask for consent
+        console.log('Opening Google sign-in popup...');
+        tokenClient.requestAccessToken({ prompt: 'consent' });
+      } else {
+        // Skip display of account chooser and consent dialog for an existing session.
+        tokenClient.requestAccessToken({ prompt: '' });
+      }
+    }
+
+    async function importCalendarAvailability() {
+      try {
+        if (!eventData) {
+          alert('No event data found. Please create an event first.');
+          return;
+        }
+
+        const { selectedDays, month, year, startTime, endTime } = eventData;
+
+        // Calculate date range from selected days
+        const firstDay = Math.min(...selectedDays);
+        const lastDay = Math.max(...selectedDays);
+        const timeMin = new Date(year, month, firstDay);
+        timeMin.setHours(0, 0, 0, 0);
+        const timeMax = new Date(year, month, lastDay);
+        timeMax.setHours(23, 59, 59, 999);
+
+        // Fetch calendar events
+        const response = await gapi.client.calendar.events.list({
+          'calendarId': 'primary',
+          'timeMin': timeMin.toISOString(),
+          'timeMax': timeMax.toISOString(),
+          'showDeleted': false,
+          'singleEvents': true,
+          'orderBy': 'startTime'
+        });
+
+        const events = response.result.items;
+
+        if (!events || events.length === 0) {
+          alert('No events found in your calendar for the selected dates.');
+          return;
+        }
+
+        // Mark calendar events on the grid
+        markFreeTimeSlots(events);
+        alert(`Successfully imported ${events.length} events from your Google Calendar!`);
+
+      } catch (err) {
+        console.error('Error fetching calendar events:', err);
+        alert('Failed to import calendar availability. Please try again.');
+      }
+    }
+
+    function markFreeTimeSlots(events) {
+      const { selectedDays, month, year, startTime, endTime } = eventData;
+      const startH = parseInt(startTime.split(":")[0]);
+      const endH = parseInt(endTime.split(":")[0]);
+
+      // Get all day grids
+      const dayGrids = document.querySelectorAll('.day-grid');
+
+      // First, create a map to track busy time slots for each day
+      const busySlots = new Map();
+
+      events.forEach(event => {
+        // Skip all-day events
+        if (!event.start.dateTime || !event.end.dateTime) {
+          return;
+        }
+
+        const eventStart = new Date(event.start.dateTime);
+        const eventEnd = new Date(event.end.dateTime);
+
+        // Find which day column this event belongs to
+        selectedDays.forEach((dayNum, dayIndex) => {
+          // Check if event occurs on this day
+          if (eventStart.getDate() === dayNum &&
+              eventStart.getMonth() === month &&
+              eventStart.getFullYear() === year) {
+
+            const eventStartHour = eventStart.getHours() + eventStart.getMinutes() / 60;
+            const eventEndHour = eventEnd.getHours() + eventEnd.getMinutes() / 60;
+
+            // Only track slots within the grid's time range
+            if (eventEndHour > startH && eventStartHour < endH) {
+              // Calculate which cells are busy (15-minute slots = 4 per hour)
+              const startSlot = Math.max(0, Math.floor((eventStartHour - startH) * 4));
+              const endSlot = Math.min((endH - startH) * 4, Math.ceil((eventEndHour - startH) * 4));
+
+              // Initialize busy slots array for this day if not exists
+              if (!busySlots.has(dayIndex)) {
+                busySlots.set(dayIndex, new Set());
+              }
+
+              // Mark these slots as busy
+              for (let i = startSlot; i < endSlot; i++) {
+                busySlots.get(dayIndex).add(i);
+              }
+            }
+          }
+        });
+      });
+
+      // Now mark all FREE time slots (slots NOT in busySlots)
+      dayGrids.forEach((grid, dayIndex) => {
+        const cells = grid.querySelectorAll('.cell');
+        const busySlotsForDay = busySlots.get(dayIndex) || new Set();
+
+        cells.forEach((cell, slotIndex) => {
+          // If this slot is NOT busy, mark it as available (free)
+          if (!busySlotsForDay.has(slotIndex)) {
+            cell.classList.add('active', 'imported');
+            cell.title = 'Available (from calendar)';
+          }
+        });
+      });
+    }
+
+    // Initialize Google APIs when page loads
+    window.addEventListener('load', () => {
+      if (typeof gapi !== 'undefined') {
+        gapiLoaded();
+      }
+      if (typeof google !== 'undefined') {
+        gisLoaded();
+      }
+    });
+  </script>
+</body>
+</html>
