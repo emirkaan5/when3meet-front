@@ -22,10 +22,10 @@ const User = new Schema(
       type: String,
       required: [true, "Password is required"],
       minlength: [6, "Password must be at least 6 characters"],
-          // new properties
-      loginAttempts: { type: Number, required: true, default: 0 },
-      lockUntil: { type: Number }
     },
+    // new properties
+    loginAttempts: { type: Number, required: true, default: 0 },
+    lockUntil: { type: Number }
   },
   {
     timestamps: true, // Adds createdAt and updatedAt fields

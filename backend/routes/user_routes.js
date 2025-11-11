@@ -3,9 +3,9 @@ const userCtrl = require("../controllers/user_controllers");
 
 router.post("/register", userCtrl.createUser); // POST /users/register
 router.post("/login", userCtrl.loginUser);     // POST /users/login
-router.get("/:id", userCtrl.getUserById);      // POST /users/:id
+router.get("/:id", userCtrl.getUserById);      // GET /users/:id
 
-router.get("/", (req, res) => {                // GET /users/
+router.get("/", (_, res) => {                // GET /users/
   res.status(200).json({ message: "User API connected successfully" });
 });
 
@@ -22,10 +22,12 @@ module.exports = router;
 
 ## Usage Example:
 
+## Body must be JSON format!!!!!!!!!
+
 **Register:**
 POST http://localhost:PORT/users/register
 Body: {
-  "username": "john_doe",
+  "userName": "john_doe",
   "email": "john@example.com",
   "password": "mySecurePass123"
 }
