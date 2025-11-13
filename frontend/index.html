@@ -244,7 +244,7 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <script>
-        const API_BASE_URL = 'http://localhost:50001';
+        const API_BASE_URL = 'http://localhost:5000';
 
         const loginForm = document.getElementById('login-form');
         const emailInput = document.getElementById('email');
@@ -279,11 +279,25 @@
         // 4) Send the ID token to your backend to create a session
         function handleCredentialResponse(response) {
             // response.credential is a JWT ID token
-            fetch("/api/auth/google-id-token", {
+            fetch(`${API_BASE_URL}/auth/google`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ id_token: response.credential })
-            }).then(() => location.reload());
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('isLoggedIn', 'true');
+                    window.location.href = 'home.html';
+                } else {
+                    alert('Google login failed: ' + (data.message || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Google login error:', error);
+                alert('Google login failed. Please try again.');
+            });
         }
 
         // Redirect to event creation form
@@ -339,20 +353,15 @@
                     // Login successful
                     console.log('Login successful:', data);
                     
-                    // Store user data in localStorage (optional)
-                    // localStorage.setItem('user', JSON.stringify(data.user));
-                    // localStorage.setItem('isLoggedIn', 'true');
+                    // Store user data in localStorage
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    localStorage.setItem('isLoggedIn', 'true');
                     
-                    // Show success message
-                    // showSuccess('Login successful! Redirecting...');
-                    
-                    // Redirect to home page after a short delay
-                    setTimeout(() => {
-                        window.location.href = 'home.html';
-                    }, 1000);
-                // } else {
-                //     // Login failed
-                //     showError(data.message || 'Login failed. Please check your credentials.');
+                    // Redirect to home page
+                    window.location.href = 'home.html';
+                } else {
+                    // Login failed
+                    alert(data.message || 'Login failed. Please check your credentials.');
                 }
             } catch (error) {
                 console.error('Login error:', error);
