@@ -5,6 +5,7 @@ import '../styles/create-event.css'
 
 export default function CreateEvent() {
   const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('') // ADDED
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -51,12 +52,21 @@ export default function CreateEvent() {
     setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))
   }
 
-  function create() {
+  async function create() { // CHANGED: added async
     if (!title || !start || !end || !selected.length) return alert('Missing fields.')
 
     const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/
     if (!timeRegex.test(start) || !timeRegex.test(end)) {
       alert('Enter 24h times like 09:00 / 17:30')
+      return
+    }
+
+    // ADDED: Get logged-in user
+    const user = JSON.parse(localStorage.getItem('user') || '{}')
+    const creator = user._id || user.id
+    if (!creator) {
+      alert('Please log in to create an event.')
+      navigate('/login')
       return
     }
 
@@ -66,22 +76,54 @@ export default function CreateEvent() {
     const formattedEnd   = last.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
     const dateRange = selected.length > 1 ? `${formattedStart} – ${formattedEnd}` : formattedStart
 
-    const event = {
-      title,
-      startTime: start,
-      endTime: end,
-      selectedDays: selected,
-      month,
-      year,
-      startDate: formattedStart,
-      endDate: formattedEnd,
-      dateRange
-    }
+    // ADDED: Calculate window for backend
+    const [startHour, startMin] = start.split(':').map(Number)
+    const [endHour, endMin] = end.split(':').map(Number)
+    const windowStart = new Date(year, month, Math.min(...selected), startHour, startMin)
+    const windowEnd = new Date(year, month, Math.max(...selected), endHour, endMin)
 
-    localStorage.setItem('eventData', JSON.stringify(event))
-    const all = JSON.parse(localStorage.getItem('savedEvents') || '[]')
-    localStorage.setItem('savedEvents', JSON.stringify([event, ...all]))
-    navigate('/availability')
+    // ADDED: Save to backend
+    try {
+      const response = await fetch('http://localhost:50001/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title,
+          description,
+          creator,
+          window: {
+            start: windowStart.toISOString(),
+            end: windowEnd.toISOString()
+          },
+          participants: []
+        })
+      })
+
+      if (!response.ok) throw new Error('Failed to create event')
+      const savedEvent = await response.json()
+
+      // Keep your original localStorage logic
+      const event = {
+        ...savedEvent, // ADDED: include backend response
+        title,
+        startTime: start,
+        endTime: end,
+        selectedDays: selected,
+        month,
+        year,
+        startDate: formattedStart,
+        endDate: formattedEnd,
+        dateRange
+      }
+
+      localStorage.setItem('eventData', JSON.stringify(event))
+      const all = JSON.parse(localStorage.getItem('savedEvents') || '[]')
+      localStorage.setItem('savedEvents', JSON.stringify([event, ...all]))
+      
+      navigate('/availability')
+    } catch (err) {
+      alert('Failed to create event: ' + err.message)
+    }
   }
 
   return (
@@ -91,6 +133,24 @@ export default function CreateEvent() {
 
         <label>Event name</label>
         <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Planning Meeting" />
+
+        {/* ADDED: Description field */}
+        <label>Description (optional)</label>
+        <textarea
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          placeholder="What's this meeting about?"
+          rows="3"
+          style={{ 
+            width: '100%', 
+            padding: '8px', 
+            marginBottom: '12px',
+            fontFamily: 'inherit',
+            fontSize: '14px',
+            border: '1px solid #ddd',
+            borderRadius: '4px'
+          }}
+        />
 
         <label>What times might work?</label>
         <div className="time-range">
