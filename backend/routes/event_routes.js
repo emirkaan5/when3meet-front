@@ -8,4 +8,9 @@ router.get('/:eventId', ctrl.getEvent);       // GET  /api/events/:eventId
 router.patch('/:eventId', ctrl.updateEvent);  // PATCH /api/events/:eventId
 router.delete('/:eventId', ctrl.deleteEvent); // DELETE /api/events/:eventId
 
+
+// NEW ROUTES
+router.post('/:eventId/finalize', ctrl.finalizeMeeting);
+router.get('/:eventId/summary', ctrl.getMeetingSummary);
+
 module.exports = router;
