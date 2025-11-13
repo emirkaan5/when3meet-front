@@ -61,10 +61,9 @@ export default function CreateEvent() {
       return
     }
 
-    // ADDED: Get logged-in user
+    // Check if user is logged in
     const user = JSON.parse(localStorage.getItem('user') || '{}')
-    const creator = user._id || user.id
-    if (!creator) {
+    if (!user.email) {
       alert('Please log in to create an event.')
       navigate('/login')
       return
@@ -82,20 +81,22 @@ export default function CreateEvent() {
     const windowStart = new Date(year, month, Math.min(...selected), startHour, startMin)
     const windowEnd = new Date(year, month, Math.max(...selected), endHour, endMin)
 
-    // ADDED: Save to backend
+    // Save to backend
     try {
-      const response = await fetch('http://localhost:50001/api/events', {
+      const userEmail = JSON.parse(localStorage.getItem('user') || '{}').email || 'anonymous'
+      
+      const response = await fetch('http://localhost:5000/meetings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title,
           description,
-          creator,
-          window: {
-            start: windowStart.toISOString(),
-            end: windowEnd.toISOString()
-          },
-          participants: []
+          startTime: start,
+          endTime: end,
+          selectedDays: selected,
+          month,
+          year,
+          creatorEmail: userEmail
         })
       })
 
