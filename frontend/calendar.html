@@ -465,7 +465,7 @@
       nameInput.focus();
     });
 
-    saveBtn.addEventListener("click", () => {
+    saveBtn.addEventListener("click", async () => {
       const name = nameInput.value.trim();
       if (!name) {
         nameInput.style.borderColor = "#e57373";
@@ -473,16 +473,55 @@
         return;
       }
 
-      const selected = [...document.querySelectorAll(".cell.active")].map((c, i) => i);
+      const allCells = document.querySelectorAll(".cell");
+      const selected = [...document.querySelectorAll(".cell.active")].map(activeCell => {
+        return Array.from(allCells).indexOf(activeCell);
+      });
       const eventKey = eventData?.title || "defaultEvent";
-      responses[eventKey] = responses[eventKey] || [];
-      responses[eventKey].push({ name, selected });
-      localStorage.setItem("responses", JSON.stringify(responses));
-
-      modal.classList.remove("show");
-      nameInput.value = "";
-      document.querySelectorAll(".cell").forEach(c => c.classList.remove("active"));
-      renderResponses();
+      const userEmail = JSON.parse(localStorage.getItem('user') || '{}').email || 'anonymous';
+      
+      // Save to database
+      console.log('Saving availability:', { eventKey, name, selected: selected.length, userEmail });
+      
+      try {
+        const response = await fetch('http://localhost:5000/availability', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ eventKey, name, selected, userEmail })
+        });
+        
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Server error response:', errorText);
+          throw new Error(`Server error: ${response.status} - ${errorText}`);
+        }
+        
+        const result = await response.json();
+        console.log('Server response:', result);
+        
+        if (result.success) {
+          console.log('✅ Availability saved to database!');
+          // Also save to localStorage for backward compatibility
+          responses[eventKey] = responses[eventKey] || [];
+          responses[eventKey].push({ name, selected });
+          localStorage.setItem("responses", JSON.stringify(responses));
+          
+          modal.classList.remove("show");
+          nameInput.value = "";
+          document.querySelectorAll(".cell").forEach(c => c.classList.remove("active"));
+          renderResponses();
+          alert('Availability saved successfully!');
+        } else {
+          console.error('Save failed:', result.message);
+          alert('Failed to save availability: ' + result.message);
+        }
+      } catch (error) {
+        console.error('❌ Error saving availability:', error);
+        console.error('Error details:', error.message);
+        alert('Error saving availability: ' + error.message);
+      }
     });
 
     renderResponses();

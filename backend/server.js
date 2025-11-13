@@ -125,6 +125,77 @@ app.post('/auth/google', async (req, res) => {
     }
 });
 
+// Save availability endpoint
+app.post('/availability', async (req, res) => {
+    console.log('Received availability request:', req.body);
+    
+    try {
+        // Check if database is connected
+        if (!db) {
+            console.error('Database not connected');
+            return res.status(500).json({
+                success: false,
+                message: 'Database not connected'
+            });
+        }
+        
+        const { eventKey, name, selected, userEmail } = req.body;
+        
+        // Validate required fields
+        if (!eventKey || !name) {
+            console.error('Missing required fields:', { eventKey, name });
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: eventKey and name'
+            });
+        }
+        
+        const availabilityData = {
+            eventKey,
+            name,
+            selected: selected || [],
+            userEmail: userEmail || 'anonymous',
+            timestamp: new Date()
+        };
+        
+        console.log('Saving availability data:', availabilityData);
+        
+        // Store availability in database
+        const result = await db.collection('availability').insertOne(availabilityData);
+        
+        console.log(`✅ Availability saved successfully for ${name} in event ${eventKey}`);
+        console.log('Database result:', result.insertedId);
+        
+        res.json({
+            success: true,
+            id: result.insertedId
+        });
+    } catch (error) {
+        console.error('❌ Error saving availability:', error.message);
+        console.error('Full error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to save availability: ' + error.message
+        });
+    }
+});
+
+// Get availability for an event
+app.get('/availability/:eventKey', async (req, res) => {
+    try {
+        const { eventKey } = req.params;
+        
+        const availability = await db.collection('availability')
+            .find({ eventKey })
+            .toArray();
+        
+        res.json({ availability });
+    } catch (error) {
+        console.error('Error fetching availability:', error);
+        res.status(500).json({ error: 'Failed to fetch availability' });
+    }
+});
+
 // Endpoint to check users in database
 app.get('/users', async (req, res) => {
     try {
@@ -133,6 +204,21 @@ app.get('/users', async (req, res) => {
     } catch (error) {
         console.error('Error fetching users:', error);
         res.status(500).json({ error: 'Failed to fetch users' });
+    }
+});
+
+// Test database connection endpoint
+app.get('/test-db', async (req, res) => {
+    try {
+        await db.collection('test').insertOne({ test: 'Database working!', timestamp: new Date() });
+        const count = await db.collection('users').countDocuments();
+        res.json({ 
+            status: 'Database connected!', 
+            userCount: count,
+            timestamp: new Date()
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Database connection failed', details: error.message });
     }
 });
 
