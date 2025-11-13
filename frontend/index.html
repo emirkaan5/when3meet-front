@@ -12,6 +12,13 @@
     - Implement password recovery through "Forgot your password?"
     - Implement error handling for invalid inputs.
 
+
+    User Test Info:
+    {
+    "userName": "xingyu",
+    "email": "xingyu@test.com",
+    "password": "test123"
+    }
 -->
 <!-- log in page -->
 
@@ -219,8 +226,9 @@
         </header>
         <h2> Log In</h2>
         <form class="login-form">
-            <input type="text" placeholder="Email" required />
+            <input type="text" id="email" placeholder="Email" required />
             <input type="password" id="password" placeholder="Password" required />
+            <div class="error-message" id="error-message"></div>
             <button type="button" id="login-btn">Log In</button>
             <a href="#">Forgot your password?</a>
             <p>Not a user? <a href="#">Register</a></p>
@@ -236,7 +244,16 @@
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <script>
-        // 3) When the script loads, initialize and render the button
+        const API_BASE_URL = 'http://localhost:50001';
+
+        const loginForm = document.getElementById('login-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('login-btn');
+        const errorMessage = document.getElementById('error-message');
+        // const btnText = document.getElementById('btn-text');
+        // const spinner = document.getElementById('spinner');
+
         window.onload = function () {
             google.accounts.id.initialize({
                 client_id: "YOUR_GOOGLE_OAUTH_CLIENT_ID",
@@ -270,21 +287,86 @@
         }
 
         // Redirect to event creation form
-        document.getElementById("login-btn").addEventListener("click", () => {
-            // TODO: submit the information to backend for verification
-            const email = document.querySelector('.login-form input[type="text"]').value;
-            const password = document.querySelector('.login-form input[type="password"]').value;
+        // document.getElementById("login-btn").addEventListener("click", () => {
+        //     // TODO: submit the information to backend for verification
+        //     const email = document.querySelector('.login-form input[type="text"]').value;
+        //     const password = document.querySelector('.login-form input[type="password"]').value;
 
-            if (email && password) {
-                window.location.href = "home.html";
-            } else {
-                alert("Please fill in both email and password.");
+        //     if (email && password) {
+        //         window.location.href = "home.html";
+        //     } else {
+        //         alert("Please fill in both email and password.");
+        //     }
+        // });
+
+        loginBtn.addEventListener('click', async () => {
+
+            // Get input values
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            // Basic validation
+            if (!email || !password) {
+                alert('Please fill in both email and password.');
+                return;
             }
+
+            // if (!isValidEmail(email)) {
+            //     showError('Please enter a valid email address.');
+            //     emailInput.classList.add('error');
+            //     return;
+            // }
+
+            // Start loading state
+            // setLoading(true);
+
+            try {
+                // Send login request to backend
+                const response = await fetch(`${API_BASE_URL}/users/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    // Login successful
+                    console.log('Login successful:', data);
+                    
+                    // Store user data in localStorage (optional)
+                    // localStorage.setItem('user', JSON.stringify(data.user));
+                    // localStorage.setItem('isLoggedIn', 'true');
+                    
+                    // Show success message
+                    // showSuccess('Login successful! Redirecting...');
+                    
+                    // Redirect to home page after a short delay
+                    setTimeout(() => {
+                        window.location.href = 'home.html';
+                    }, 1000);
+                // } else {
+                //     // Login failed
+                //     showError(data.message || 'Login failed. Please check your credentials.');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Unable to connect to server. Please try again later.');
+            } 
+            // finally {
+            //     setLoading(false);
+            // }
         });
 
-        document.getElementById('password').addEventListener("keydown", (event) => {
+        // Handle Enter key in password field
+        passwordInput.addEventListener("keydown", (event) => {
             if (event.code === "Enter") {
-                document.getElementById("login-btn").click();
+                loginBtn.click();
             }
         });
 
