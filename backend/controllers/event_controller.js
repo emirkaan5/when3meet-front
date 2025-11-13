@@ -85,3 +85,55 @@ exports.deleteEvent = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
+
+// ADD THIS METHOD
+exports.finalizeMeeting = async (req, res) => {
+  try {
+    const { determinedTime } = req.body;
+    const event = await Event.findById(req.params.eventId);
+    
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    // Validate determinedTime is within window
+    const chosenTime = new Date(determinedTime);
+    if (chosenTime < event.window.start || chosenTime > event.window.end) {
+      return res.status(400).json({ 
+        error: 'Determined time must be within event window' 
+      });
+    }
+
+    event.determinedTime = determinedTime;
+    event.status = 'finalized';
+    await event.save();
+
+    res.json(event);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// Get complete meeting summary
+exports.getMeetingSummary = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params.eventId)
+      .populate('creator', 'userName email')
+      .populate('participants.user', 'userName email');
+    
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found' });
+    }
+
+    const availabilities = await Availability.find({ eventId: event._id })
+      .populate('userId', 'userName email');
+
+    res.json({
+      event,
+      availabilities,
+      totalResponses: availabilities.length
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
