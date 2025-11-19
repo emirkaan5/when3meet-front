@@ -146,4 +146,79 @@ PUT http://localhost:50001/api/availability
 
 ---
 
-# Notes (under development...)
+# Notes
+
+## Config
+**`db.js`**  
+Connects the Node.js application to MongoDB via Mongoose, handles connection errors, and ensures the database connection closes gracefully on process termination.
+
+---
+
+## Controllers
+**`availability_controller.js`**  
+Manages event availability data: creating/updating availability, listing all availability for an event, retrieving or deleting individual entries, and validating that submitted time slots fall within the event’s window.
+
+**`event_controller.js`**  
+Handles all event operations: create, list, retrieve, update, delete, finalize, and summarize events. Validates event time windows and manages related availability records.
+
+**`user_controllers.js`**  
+Manages user registration, login with password validation, and secure retrieval of user details (passwords are never exposed).
+
+---
+
+## Models
+**`availability_model.js`**  
+Defines how availability is stored, linking each record to an event and user. Stores timezone and selected slots and enforces one availability per event–email pair.
+
+**`event_model.js`**  
+Defines the event structure, including title, description, creator, time window, participants, and finalized meeting time.
+
+**`user_model.js`**  
+Defines user accounts (username, email, hashed password) and provides secure password comparison methods for authentication.
+
+---
+
+## Routes
+**`availability_routes.js`**  
+Endpoints for creating/updating, listing, retrieving, and deleting participant availability for specific events.
+
+**`event_routes.js`**  
+RESTful endpoints for managing events: create, list, retrieve, update, delete, finalize, and summarize.
+
+**`user_routes.js`**  
+User-related endpoints for registration, login, and secure user retrieval.
+
+---
+
+## Tests
+
+### `event.test.js`
+End-to-end test using in-memory MongoDB to verify the full flow:
+
+- Creates a user via **POST `/api/users`** (expects returned `_id`).  
+- Creates an event tied to that user via **POST `/api/events`**, validating window and participants.  
+- Adds availability to that event via **PUT `/api/availability`**, confirming valid slots and timezone.  
+
+Ensures the user → event → availability relationship works correctly with valid input.
+
+---
+
+### `user.test.js`
+Tests all user routes with an in-memory MongoDB instance, ensuring both correctness and secure response formatting.
+
+#### `POST /users/register`
+- Registers a new user with `userName`, `email`, and `password`.  
+- Expects `201`, a success message, and a sanitized user object (**no password**).  
+- Confirms registration + password-hiding behavior.
+
+#### `POST /users/login`
+- Logs in an existing user with valid credentials.  
+- Expects `200`, a success message, and a user object without `password`.  
+- Confirms authentication and password verification.
+
+#### `GET /users/:id`
+- Retrieves a user by ID.  
+- Expects `200` and fields: `_id`, `email`, `userName` (**not** `password`).  
+- Confirms secure user lookup.
+
+---
