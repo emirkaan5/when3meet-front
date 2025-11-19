@@ -8,7 +8,13 @@ export default function Home() {
 
   useEffect(() => {
     const stored = JSON.parse(localStorage.getItem('savedEvents') || '[]')
-    setEvents(stored)
+    // Sort meetings by date (near future to far future)
+    const sortedEvents = stored.sort((a, b) => {
+      const dateA = new Date(a.year, a.month, Math.min(...a.selectedDays))
+      const dateB = new Date(b.year, b.month, Math.min(...b.selectedDays))
+      return dateA - dateB
+    })
+    setEvents(sortedEvents)
   }, [])
 
   const view = (e) => {

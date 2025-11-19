@@ -24,6 +24,9 @@ export default function Availability() {
 
   useEffect(() => {
     if (!eventData) return
+    // Sort selected days in ascending order (chronological)
+    const sortedDays = [...eventData.selectedDays].sort((a, b) => a - b)
+    eventData.selectedDays = sortedDays
     // init empty grid per day
     setCellsActive(Array(eventData.selectedDays.length).fill(0).map(() => Array(totalCells).fill(false)))
   }, [eventData, totalCells])
