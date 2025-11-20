@@ -30,3 +30,7 @@ backend/.env
 *.njsproj
 *.sln
 *.sw?
+
+.env
+.gitignore
+_metadata.json
