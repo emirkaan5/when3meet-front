@@ -24,7 +24,12 @@ export default function Home() {
 
   return (
     <div className="home">
-      {/* No flowers on home page */}
+      {/* Flowers background */}
+      <div className="bottom-decor">
+        <div className="flower-gradient"></div>
+        <img src="/image.png" alt="Lavender Field" className="bottom-flowers" />
+      </div>
+      
       <div className="content">
         <header className="header">
           <img src="/logo.png" alt="When3Meet Logo" className="logo" />
