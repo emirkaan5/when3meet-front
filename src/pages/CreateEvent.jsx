@@ -1,5 +1,5 @@
 // src/pages/CreateEvent.jsx
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import '../styles/create-event.css'
 
@@ -10,6 +10,10 @@ export default function CreateEvent() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [selected, setSelected] = useState([])
   const navigate = useNavigate()
+
+  // drag state for date selection
+  const draggingRef = useRef(false)
+  const addModeRef = useRef(true) // true = selecting, false = deselecting
 
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -23,12 +27,16 @@ export default function CreateEvent() {
   const { cells } = useMemo(() => {
     const daysInMonth = new Date(year, month + 1, 0).getDate()
     const firstDay = new Date(year, month, 1).getDay() // 0=Sun..6=Sat
-    const blanks = (firstDay + 6) % 7 // move Monday-first look (M..S)
+    const blanks = (firstDay + 6) % 7 // Monday-first layout
     const cells = []
 
     // headers: M T W T F S S
-    const headers = ['M','T','W','T','F','S','S'].map((d, i) => ({ type: 'hdr', key: `hdr-${i}`, text: d }))
-    headers.forEach(h => cells.push(h))
+    const headers = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => ({
+      type: 'hdr',
+      key: `hdr-${i}`,
+      text: d
+    }))
+    headers.forEach((h) => cells.push(h))
 
     // leading blanks
     for (let i = 0; i < blanks; i++) cells.push({ type: 'blank', key: `b-${i}` })
@@ -39,16 +47,22 @@ export default function CreateEvent() {
     return { cells }
   }, [year, month])
 
-  const toggle = (d) => {
-    setSelected(s => (s.includes(d) ? s.filter(x => x !== d) : [...s, d]))
+  // helper to set a specific day selected/unselected
+  const setDaySelected = (day, value) => {
+    setSelected((prev) => {
+      const has = prev.includes(day)
+      if (value && !has) return [...prev, day]
+      if (!value && has) return prev.filter((x) => x !== day)
+      return prev
+    })
   }
 
   function prevMonth() {
-    setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() - 1, 1))
+    setCurrentDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))
   }
 
   function nextMonth() {
-    setCurrentDate(d => new Date(d.getFullYear(), d.getMonth() + 1, 1))
+    setCurrentDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))
   }
 
   function create() {
@@ -61,9 +75,17 @@ export default function CreateEvent() {
     }
 
     const first = new Date(year, month, Math.min(...selected))
-    const last  = new Date(year, month, Math.max(...selected))
-    const formattedStart = first.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-    const formattedEnd   = last.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    const last = new Date(year, month, Math.max(...selected))
+    const formattedStart = first.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })
+    const formattedEnd = last.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    })
     const dateRange = selected.length > 1 ? `${formattedStart} – ${formattedEnd}` : formattedStart
 
     const event = {
@@ -84,22 +106,53 @@ export default function CreateEvent() {
     navigate('/availability')
   }
 
+  // drag handlers for dates
+  function handleDayMouseDown(day, e) {
+    e.preventDefault() // avoid text selection while dragging
+    const willAdd = !selected.includes(day)
+    draggingRef.current = true
+    addModeRef.current = willAdd
+    setDaySelected(day, willAdd)
+  }
+
+  function handleDayMouseEnter(day) {
+    if (!draggingRef.current) return
+    setDaySelected(day, addModeRef.current)
+  }
+
+  function handleMouseUp() {
+    draggingRef.current = false
+  }
+
   return (
     <div className="ce-page">
       <div className="card">
         <h1>New event</h1>
 
         <label>Event name</label>
-        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Planning Meeting" />
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Planning Meeting"
+        />
 
         <label>What times might work?</label>
         <div className="time-range">
-          <input value={start} onChange={e => setStart(e.target.value)} placeholder="09:00" /> to
-          <input value={end} onChange={e => setEnd(e.target.value)} placeholder="17:00" />
+          <input
+            value={start}
+            onChange={(e) => setStart(e.target.value)}
+            placeholder="09:00"
+          />{' '}
+          to
+          <input
+            value={end}
+            onChange={(e) => setEnd(e.target.value)}
+            placeholder="17:00"
+          />
         </div>
 
         <label>What dates might work?</label>
-        <p className="helper">Click to select multiple dates</p>
+        <p className="helper">Click and drag to select multiple dates</p>
 
         <div className="calendar-header">
           <button onClick={prevMonth}>&#8249;</button>
@@ -107,15 +160,29 @@ export default function CreateEvent() {
           <button onClick={nextMonth}>&#8250;</button>
         </div>
 
-        <div className="calendar">
-          {cells.map(cell => {
-            if (cell.type === 'hdr') return <div key={cell.key} className="header">{cell.text}</div>
+        <div
+          className="calendar"
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+        >
+          {cells.map((cell) => {
+            if (cell.type === 'hdr') {
+              return (
+                <div key={cell.key} className="header">
+                  {cell.text}
+                </div>
+              )
+            }
             if (cell.type === 'blank') return <div key={cell.key} />
+
+            const isSelected = selected.includes(cell.day)
+
             return (
               <div
                 key={cell.key}
-                className={selected.includes(cell.day) ? 'selected' : ''}
-                onClick={() => toggle(cell.day)}
+                className={isSelected ? 'selected' : ''}
+                onMouseDown={(e) => handleDayMouseDown(cell.day, e)}
+                onMouseEnter={() => handleDayMouseEnter(cell.day)}
               >
                 {cell.day}
               </div>
@@ -124,8 +191,12 @@ export default function CreateEvent() {
         </div>
 
         <div className="actions">
-          <button className="cancel-btn" onClick={() => navigate('/home')}>Cancel</button>
-          <button className="create-btn" onClick={create}>Create</button>
+          <button className="cancel-btn" onClick={() => navigate('/home')}>
+            Cancel
+          </button>
+          <button className="create-btn" onClick={create}>
+            Create
+          </button>
         </div>
       </div>
     </div>

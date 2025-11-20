@@ -17,14 +17,22 @@ export default function Availability() {
   const [tokenClient, setTokenClient] = useState(null)
   const importBtnRef = useRef(null)
 
-  const startH = useMemo(() => eventData ? parseInt(eventData.startTime.split(':')[0]) : 9, [eventData])
-  const endH   = useMemo(() => eventData ? parseInt(eventData.endTime.split(':')[0])   : 17, [eventData])
+  // drag state refs (persist across events)
+  const draggingRef = useRef(false)
+  const addModeRef = useRef(true)
+
+  const startH = useMemo(() => (eventData ? parseInt(eventData.startTime.split(':')[0]) : 9), [eventData])
+  const endH = useMemo(() => (eventData ? parseInt(eventData.endTime.split(':')[0]) : 17), [eventData])
   const totalCells = (endH - startH) * 4 // 15-min slots
 
   useEffect(() => {
     if (!eventData) return
     // init empty grid per day
-    setCellsActive(Array(eventData.selectedDays.length).fill(0).map(() => Array(totalCells).fill(false)))
+    setCellsActive(
+      Array(eventData.selectedDays.length)
+        .fill(0)
+        .map(() => Array(totalCells).fill(false))
+    )
   }, [eventData, totalCells])
 
   // Load Google API + Identity
@@ -57,24 +65,18 @@ export default function Availability() {
       <>
         <h3 id="responseHeader">Responses ({eventResponses.length}/{eventResponses.length})</h3>
         <ul className="muted" style={{ paddingLeft: 18, margin: '8px 0 0' }}>
-          {eventResponses.map((r, i) => <li key={i}>{r.name}</li>)}
+          {eventResponses.map((r, i) => (
+            <li key={i}>{r.name}</li>
+          ))}
         </ul>
       </>
     )
   }
 
   function setCell(dayIndex, slotIndex, value) {
-    setCellsActive(prev => {
-      const next = prev.map(row => row.slice())
+    setCellsActive((prev) => {
+      const next = prev.map((row) => row.slice())
       next[dayIndex][slotIndex] = value
-      return next
-    })
-  }
-
-  function toggleCell(dayIndex, slotIndex) {
-    setCellsActive(prev => {
-      const next = prev.map(row => row.slice())
-      next[dayIndex][slotIndex] = !prev[dayIndex][slotIndex]
       return next
     })
   }
@@ -88,12 +90,12 @@ export default function Availability() {
     newResponses[key] = newResponses[key] || []
     newResponses[key].push({
       name,
-      selected: cellsActive.map(dayArr => dayArr.reduce((acc, on, i) => (on ? [...acc, i] : acc), []))
+      selected: cellsActive.map((dayArr) => dayArr.reduce((acc, on, i) => (on ? [...acc, i] : acc), []))
     })
     setResponses(newResponses)
     localStorage.setItem('responses', JSON.stringify(newResponses))
     // Clear after save
-    setCellsActive(cellsActive.map(arr => arr.map(() => false)))
+    setCellsActive(cellsActive.map((arr) => arr.map(() => false)))
   }
 
   async function handleImport() {
@@ -124,13 +126,18 @@ export default function Availability() {
   }
 
   async function importCalendarAvailability() {
-    if (!eventData) { alert('No event data found. Create an event first.'); return }
+    if (!eventData) {
+      alert('No event data found. Create an event first.')
+      return
+    }
     const { selectedDays, month, year } = eventData
 
     const firstDay = Math.min(...selectedDays)
-    const lastDay  = Math.max(...selectedDays)
-    const timeMin = new Date(year, month, firstDay); timeMin.setHours(0,0,0,0)
-    const timeMax = new Date(year, month, lastDay);  timeMax.setHours(23,59,59,999)
+    const lastDay = Math.max(...selectedDays)
+    const timeMin = new Date(year, month, firstDay)
+    timeMin.setHours(0, 0, 0, 0)
+    const timeMax = new Date(year, month, lastDay)
+    timeMax.setHours(23, 59, 59, 999)
 
     const response = await window.gapi.client.calendar.events.list({
       calendarId: 'primary',
@@ -142,24 +149,29 @@ export default function Availability() {
     })
 
     const events = response.result.items || []
-    if (!events.length) { alert('No events found in your calendar for the selected dates.'); return }
+    if (!events.length) {
+      alert('No events found in your calendar for the selected dates.')
+      return
+    }
 
     // Build busy slots per dayIndex
     const busyByDay = new Map()
-    events.forEach(ev => {
+    events.forEach((ev) => {
       if (!ev.start?.dateTime || !ev.end?.dateTime) return
       const evStart = new Date(ev.start.dateTime)
-      const evEnd   = new Date(ev.end.dateTime)
+      const evEnd = new Date(ev.end.dateTime)
 
       eventData.selectedDays.forEach((dayNum, dayIndex) => {
-        if (evStart.getDate() === dayNum &&
-            evStart.getMonth() === eventData.month &&
-            evStart.getFullYear() === eventData.year) {
-          const evStartHour = evStart.getHours() + evStart.getMinutes()/60
-          const evEndHour   = evEnd.getHours() + evEnd.getMinutes()/60
+        if (
+          evStart.getDate() === dayNum &&
+          evStart.getMonth() === eventData.month &&
+          evStart.getFullYear() === eventData.year
+        ) {
+          const evStartHour = evStart.getHours() + evStart.getMinutes() / 60
+          const evEndHour = evEnd.getHours() + evEnd.getMinutes() / 60
           if (evEndHour > startH && evStartHour < endH) {
             const startSlot = Math.max(0, Math.floor((evStartHour - startH) * 4))
-            const endSlot   = Math.min((endH - startH) * 4, Math.ceil((evEndHour - startH) * 4))
+            const endSlot = Math.min((endH - startH) * 4, Math.ceil((evEndHour - startH) * 4))
             if (!busyByDay.has(dayIndex)) busyByDay.set(dayIndex, new Set())
             for (let i = startSlot; i < endSlot; i++) busyByDay.get(dayIndex).add(i)
           }
@@ -168,28 +180,55 @@ export default function Availability() {
     })
 
     // Free slots = not busy
-    setCellsActive(prev => prev.map((arr, dayIndex) => {
-      const busy = busyByDay.get(dayIndex) || new Set()
-      return arr.map((_, slot) => !busy.has(slot))
-    }))
+    setCellsActive((prev) =>
+      prev.map((arr, dayIndex) => {
+        const busy = busyByDay.get(dayIndex) || new Set()
+        return arr.map((_, slot) => !busy.has(slot))
+      })
+    )
 
     alert(`Imported ${events.length} events from your Google Calendar.`)
+  }
+
+  // drag handlers
+  function handleCellMouseDown(dayIndex, slotIndex, e) {
+    e.preventDefault() // avoid text selection while dragging
+    const willAdd = !cellsActive[dayIndex]?.[slotIndex]
+    draggingRef.current = true
+    addModeRef.current = willAdd
+    setCell(dayIndex, slotIndex, willAdd)
+  }
+
+  function handleCellMouseEnter(dayIndex, slotIndex) {
+    if (!draggingRef.current) return
+    setCell(dayIndex, slotIndex, addModeRef.current)
+  }
+
+  function handleMouseUp() {
+    draggingRef.current = false
   }
 
   if (!eventData) {
     return (
       <div className="availability-page">
-        <div className="main"><p>No event loaded. <button onClick={() => navigate('/create')}>Create one</button></p></div>
+        <div className="main">
+          <p>
+            No event loaded. <button onClick={() => navigate('/create')}>Create one</button>
+          </p>
+        </div>
       </div>
     )
   }
 
   // header dates
   const firstDate = new Date(eventData.year, eventData.month, Math.min(...eventData.selectedDays))
-  const lastDate  = new Date(eventData.year, eventData.month, Math.max(...eventData.selectedDays))
+  const lastDate = new Date(eventData.year, eventData.month, Math.max(...eventData.selectedDays))
   const eventDates =
     firstDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) +
-    (eventData.selectedDays.length > 1 ? ' – ' + lastDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '')
+    (eventData.selectedDays.length > 1
+      ? ' – ' +
+        lastDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+      : '')
 
   return (
     <div className="availability-page">
@@ -201,9 +240,18 @@ export default function Availability() {
               <span>{eventDates}</span>
             </div>
             <div className="header-right">
-              <button className="btn" onClick={copyLink}>Copy link</button>
-              <button className="btn primary" onClick={addAvailability}>Add availability</button>
-              <button className="btn primary" ref={importBtnRef} onClick={handleImport} title="Import availability">
+              <button className="btn" onClick={copyLink}>
+                Copy link
+              </button>
+              <button className="btn primary" onClick={addAvailability}>
+                Add availability
+              </button>
+              <button
+                className="btn primary"
+                ref={importBtnRef}
+                onClick={handleImport}
+                title="Import availability"
+              >
                 Import availability
               </button>
             </div>
@@ -216,7 +264,15 @@ export default function Availability() {
                 const h = startH + i
                 const ampm = h >= 12 ? 'PM' : 'AM'
                 const display = ((h + 11) % 12) + 1
-                return <div className="time-label" key={h} style={{ top: `${i * 26 * 4}px` }}>{display} {ampm}</div>
+                return (
+                  <div
+                    className="time-label"
+                    key={h}
+                    style={{ top: `${i * 26 * 4}px` }}
+                  >
+                    {display} {ampm}
+                  </div>
+                )
               })}
             </div>
 
@@ -225,22 +281,10 @@ export default function Availability() {
               {eventData.selectedDays.map((dayNum, dayIndex) => {
                 const dateObj = new Date(eventData.year, eventData.month, dayNum)
                 const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'short' })
-                const monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-
-                // drag-select logic (per column)
-                let dragging = false
-                let addMode = true
-
-                const onDown = (slotIndex) => {
-                  dragging = true
-                  const willAdd = !cellsActive[dayIndex]?.[slotIndex]
-                  addMode = willAdd
-                  setCell(dayIndex, slotIndex, willAdd)
-                }
-                const onEnter = (slotIndex) => {
-                  if (dragging) setCell(dayIndex, slotIndex, addMode)
-                }
-                const onUp = () => { dragging = false }
+                const monthDay = dateObj.toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric'
+                })
 
                 return (
                   <div className="day-column" key={dayIndex}>
@@ -248,14 +292,23 @@ export default function Availability() {
                       <span>{monthDay}</span>
                       <h3>{weekday}</h3>
                     </div>
-                    <div className="day-grid" onMouseUp={onUp}>
+                    <div
+                      className="day-grid"
+                      onMouseUp={handleMouseUp}
+                      onMouseLeave={handleMouseUp}
+                    >
                       {Array.from({ length: totalCells }, (_, slotIndex) => (
                         <div
                           key={slotIndex}
-                          className={`cell ${cellsActive[dayIndex]?.[slotIndex] ? 'active' : ''}`}
-                          onMouseDown={() => onDown(slotIndex)}
-                          onMouseEnter={() => onEnter(slotIndex)}
-                          onClick={() => toggleCell(dayIndex, slotIndex)}
+                          className={`cell ${
+                            cellsActive[dayIndex]?.[slotIndex] ? 'active' : ''
+                          }`}
+                          onMouseDown={(e) =>
+                            handleCellMouseDown(dayIndex, slotIndex, e)
+                          }
+                          onMouseEnter={() =>
+                            handleCellMouseEnter(dayIndex, slotIndex)
+                          }
                         />
                       ))}
                     </div>
@@ -278,9 +331,7 @@ export default function Availability() {
         </div>
 
         <div className="sidebar">
-          <div className="responses-box">
-            {renderResponses()}
-          </div>
+          <div className="responses-box">{renderResponses()}</div>
         </div>
       </div>
     </div>
