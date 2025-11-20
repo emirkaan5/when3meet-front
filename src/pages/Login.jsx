@@ -1,50 +1,50 @@
-import { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
-import '../styles/login.css'
-import { loadGoogleIdentity } from '../lib/google'
+import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import "../styles/login.css";
+import { loadGoogleIdentity } from "../lib/google";
 
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_OAUTH_CLIENT_ID' // ← replace
+const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_OAUTH_CLIENT_ID"; // ← replace
 
 export default function Login() {
-  const navigate = useNavigate()
-  const gBtnRef = useRef(null)
+  const navigate = useNavigate();
+  const gBtnRef = useRef(null);
 
   useEffect(() => {
     // define inside effect to satisfy exhaustive-deps
     function handleCredentialResponse(response) {
-      fetch('/api/auth/google-id-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_token: response.credential })
-      }).then(() => navigate('/home'))
+      fetch("/api/auth/google-id-token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id_token: response.credential }),
+      }).then(() => navigate("/home"));
     }
 
     loadGoogleIdentity().then(() => {
-      if (!window.google?.accounts?.id) return
+      if (!window.google?.accounts?.id) return;
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: handleCredentialResponse,
-        ux_mode: 'popup'
-      })
+        ux_mode: "popup",
+      });
       if (gBtnRef.current) {
         window.google.accounts.id.renderButton(gBtnRef.current, {
-          type: 'standard',
-          theme: 'outline',
-          size: 'large',
-          text: 'signin_with',
-          shape: 'rectangular',
-          logo_alignment: 'left',
-          width: 260
-        })
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          text: "signin_with",
+          shape: "rectangular",
+          logo_alignment: "left",
+          width: 260,
+        });
       }
-    })
-  }, [navigate])
+    });
+  }, [navigate]);
 
   function handleLogin() {
-    const email = document.querySelector('input[type="text"]').value
-    const password = document.querySelector('input[type="password"]').value
-    if (email && password) navigate('/home')
-    else alert('Please fill in both fields.')
+    const email = document.querySelector('input[type="text"]').value;
+    const password = document.querySelector('input[type="password"]').value;
+    if (email && password) navigate("/home");
+    else alert("Please fill in both fields.");
   }
 
   return (
@@ -69,15 +69,19 @@ export default function Login() {
             type="password"
             placeholder="Password"
             required
-            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
           />
-          <button type="button" onClick={handleLogin}>Log In</button>
+          <button type="button" onClick={handleLogin}>
+            Log In
+          </button>
           <a href="#">Forgot password?</a>
-          <p>Not a user? <a href="#">Register</a></p>
+          <p>
+            Not a user? <a href="#">Register</a>
+          </p>
           <hr className="separator" />
           <div ref={gBtnRef} className="g-btn" />
         </form>
       </div>
     </div>
-  )
+  );
 }
