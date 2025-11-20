@@ -252,6 +252,9 @@ export default function Availability() {
         <div className="main">
           <div className="header">
             <div className="header-left">
+              <button className="nav-link" onClick={() => navigate('/home')}>
+                ← Back to Home
+              </button>
               <h1>{eventData.title}</h1>
               <span>{eventDates}</span>
             </div>

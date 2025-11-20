@@ -35,6 +35,27 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }
 
+.nav-link {
+  background: none;
+  border: none;
+  color: var(--purple);
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 0.2s ease;
+  font-family: inherit;
+  font-weight: 500;
+}
+
+.nav-link:hover {
+  color: #6d52f3;
+  text-decoration: underline;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
