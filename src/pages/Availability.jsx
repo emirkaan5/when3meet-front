@@ -8,6 +8,7 @@ const GOOGLE_CLIENT_ID = '1001839997214-8n0b2cs605n52ltdri13ccgqnct2furc.apps.go
 const GOOGLE_API_KEY = 'AIzaSyCGnUe0eCtxp77DTEjbo8a-oM_Jn-EuCl8'
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'
 const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
+const API_BASE_URL = 'http://localhost:5000'
 
 export default function Availability() {
   const navigate = useNavigate()
@@ -23,6 +24,9 @@ export default function Availability() {
 
   useEffect(() => {
     if (!eventData) return
+    // Sort selected days in ascending order (chronological)
+    const sortedDays = [...eventData.selectedDays].sort((a, b) => a - b)
+    eventData.selectedDays = sortedDays
     // init empty grid per day
     setCellsActive(Array(eventData.selectedDays.length).fill(0).map(() => Array(totalCells).fill(false)))
   }, [eventData, totalCells])
@@ -79,21 +83,75 @@ export default function Availability() {
     })
   }
 
-  function addAvailability() {
+  async function addAvailability() {
     const name = prompt('Enter your name')
     if (!name) return
-    // Store *per day* selections (slot indices 0..totalCells-1)
-    const key = eventData?.title || 'defaultEvent'
-    const newResponses = { ...responses }
-    newResponses[key] = newResponses[key] || []
-    newResponses[key].push({
-      name,
-      selected: cellsActive.map(dayArr => dayArr.reduce((acc, on, i) => (on ? [...acc, i] : acc), []))
+    
+    // Create selectedByDay format
+    const selectedByDay = {}
+    eventData.selectedDays.forEach((dayDate, dayIndex) => {
+      const activeSlotsForDay = cellsActive[dayIndex]?.reduce((acc, isActive, slotIndex) => {
+        if (isActive) {
+          const slotHour = startH + Math.floor(slotIndex / 4)
+          const slotMinute = (slotIndex % 4) * 15
+          const timeString = `${slotHour.toString().padStart(2, '0')}:${slotMinute.toString().padStart(2, '0')}`
+          const endHour = slotHour + (slotMinute === 45 ? 1 : 0)
+          const endMinute = (slotMinute + 15) % 60
+          const endTime = `${endHour.toString().padStart(2, '0')}:${endMinute.toString().padStart(2, '0')}`
+          
+          acc.push({
+            slot: slotIndex,
+            time: timeString,
+            endTime: endTime
+          })
+        }
+        return acc
+      }, []) || []
+      
+      if (activeSlotsForDay.length > 0) {
+        const dayKey = `${eventData.year}-${eventData.month + 1}-${dayDate}`
+        selectedByDay[dayKey] = {
+          date: dayDate,
+          month: eventData.month,
+          year: eventData.year,
+          dayName: new Date(eventData.year, eventData.month, dayDate).toLocaleDateString('en-US', { weekday: 'short' }),
+          timeSlots: activeSlotsForDay
+        }
+      }
     })
-    setResponses(newResponses)
-    localStorage.setItem('responses', JSON.stringify(newResponses))
-    // Clear after save
-    setCellsActive(cellsActive.map(arr => arr.map(() => false)))
+    
+    const eventKey = eventData?.title || 'defaultEvent'
+    const userEmail = JSON.parse(localStorage.getItem('user') || '{}').email || 'anonymous'
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/availability`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventKey, name, selectedByDay, userEmail })
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        console.log('✅ Availability saved to database!')
+        
+        // Also update local state
+        const newResponses = { ...responses }
+        newResponses[eventKey] = newResponses[eventKey] || []
+        newResponses[eventKey].push({ name, selectedByDay })
+        setResponses(newResponses)
+        localStorage.setItem('responses', JSON.stringify(newResponses))
+        
+        // Clear after save
+        setCellsActive(cellsActive.map(arr => arr.map(() => false)))
+        alert('Availability saved successfully!')
+      } else {
+        alert('Failed to save availability: ' + result.message)
+      }
+    } catch (error) {
+      console.error('Error saving availability:', error)
+      alert('Error saving availability: ' + error.message)
+    }
   }
 
   async function handleImport() {

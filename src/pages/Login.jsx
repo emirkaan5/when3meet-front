@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom'
 import '../styles/login.css'
 import { loadGoogleIdentity } from '../lib/google'
 
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_OAUTH_CLIENT_ID' // ← replace
+const GOOGLE_CLIENT_ID = '1001839997214-8n0b2cs605n52ltdri13ccgqnct2furc.apps.googleusercontent.com'
+const API_BASE_URL = 'http://localhost:5000'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -11,12 +12,27 @@ export default function Login() {
 
   useEffect(() => {
     // define inside effect to satisfy exhaustive-deps
-    function handleCredentialResponse(response) {
-      fetch('/api/auth/google-id-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_token: response.credential })
-      }).then(() => navigate('/home'))
+    async function handleCredentialResponse(response) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/auth/google`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id_token: response.credential })
+        })
+        
+        const data = await res.json()
+        
+        if (data.success) {
+          localStorage.setItem('user', JSON.stringify(data.user))
+          localStorage.setItem('isLoggedIn', 'true')
+          navigate('/home')
+        } else {
+          alert('Google login failed: ' + (data.message || 'Unknown error'))
+        }
+      } catch (error) {
+        console.error('Google login error:', error)
+        alert('Google login failed. Please try again.')
+      }
     }
 
     loadGoogleIdentity().then(() => {
@@ -40,11 +56,35 @@ export default function Login() {
     })
   }, [navigate])
 
-  function handleLogin() {
+  async function handleLogin() {
     const email = document.querySelector('input[type="text"]').value
     const password = document.querySelector('input[type="password"]').value
-    if (email && password) navigate('/home')
-    else alert('Please fill in both fields.')
+    
+    if (!email || !password) {
+      alert('Please fill in both fields.')
+      return
+    }
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+      
+      const data = await response.json()
+      
+      if (response.ok && data.success) {
+        localStorage.setItem('user', JSON.stringify(data.user))
+        localStorage.setItem('isLoggedIn', 'true')
+        navigate('/home')
+      } else {
+        alert(data.message || 'Login failed. Please check your credentials.')
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      alert('Unable to connect to server. Please try again later.')
+    }
   }
 
   return (
