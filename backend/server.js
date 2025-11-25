@@ -1,13 +1,10 @@
-import express from "express";
-// import cors from 'cors';
-import { OAuth2Client } from "google-auth-library";
-import { MongoClient, ObjectId } from "mongodb";
-import dotenv from "dotenv";
-
-import app from "./app";
+const { OAuth2Client } = require("google-auth-library");
+const { MongoClient, ObjectId } = require("mongodb");
+const dotenv = require("dotenv");
+const app = require("./app");
 
 /* global process */
-dotenv.config();
+dotenv.config({path:"./.env"});
 
 
 const PORT = process.env.PORT || 5000;

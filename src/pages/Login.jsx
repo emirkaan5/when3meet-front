@@ -6,6 +6,7 @@ import { loadGoogleIdentity } from "../lib/google";
 const GOOGLE_CLIENT_ID =
   "1001839997214-8n0b2cs605n52ltdri13ccgqnct2furc.apps.googleusercontent.com";
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const BACKENDPORT = 50001;
 
 export default function Login() {
   const navigate = useNavigate();
@@ -60,40 +61,42 @@ export default function Login() {
 
   //handleLogin is for simple login using email and password created for the website
   async function handleLogin() {
-    const fetchData = () => {
-      fetch("http://localhost:5000/users")
-        .then((response) => response.json())
-        .then((json) => console.log(json)).catch(err => console.error(err))
-    };
-    return fetchData()
-    // const email = document.querySelector('input[type="text"]').value
-    // const password = document.querySelector('input[type="password"]').value
+    const email = document.querySelector('input[type="text"]').value;
+    const password = document.querySelector('input[type="password"]').value;
 
-    // if (!email || !password) {
-    //   alert('Please fill in both fields.')
-    //   return
-    // }
+    if (!email || !password) {
+      alert("Please fill in both fields.");
+      return;
+    }
 
-    // try {
-    //   const response = await fetch(`${API_BASE_URL}/users/login`, {
-    //     method: 'POST',
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({ email, password })
-    //   })
+    try {
+      const response = await fetch(
+        `http://localhost:${BACKENDPORT}/test/post`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email,
+            password,
+          }),
+        }
+      );
 
-    //   const data = await response.json()
+      const data = await response.json();
 
-    //   if (response.ok && data.success) {
-    //     localStorage.setItem('user', JSON.stringify(data.user))
-    //     localStorage.setItem('isLoggedIn', 'true')
-    //     navigate('/home')
-    //   } else {
-    //     alert(data.message || 'Login failed. Please check your credentials.')
-    //   }
-    // } catch (error) {
-    //   console.error('Login error:', error)
-    //   alert('Unable to connect to server. Please try again later.')
-    // }
+      if (response.ok && data.success) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+        localStorage.setItem("isLoggedIn", "true");
+        navigate("/home");
+      } else {
+        alert(data.message || "Login failed. Please check your credentials.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Unable to connect to server. Please try again later.");
+    }
   }
 
   return (
