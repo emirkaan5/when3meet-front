@@ -1,90 +1,99 @@
-import { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
-import '../styles/login.css'
-import { loadGoogleIdentity } from '../lib/google'
+import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import "../styles/login.css";
+import { loadGoogleIdentity } from "../lib/google";
 
-const GOOGLE_CLIENT_ID = '1001839997214-8n0b2cs605n52ltdri13ccgqnct2furc.apps.googleusercontent.com'
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+const GOOGLE_CLIENT_ID =
+  "1001839997214-8n0b2cs605n52ltdri13ccgqnct2furc.apps.googleusercontent.com";
+const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
 export default function Login() {
-  const navigate = useNavigate()
-  const gBtnRef = useRef(null)
+  const navigate = useNavigate();
+  const gBtnRef = useRef(null);
 
+  // useEffect and loadGoogleIdentity are for google login
   useEffect(() => {
     // define inside effect to satisfy exhaustive-deps
     async function handleCredentialResponse(response) {
       try {
         const res = await fetch(`${API_BASE_URL}/auth/google`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id_token: response.credential })
-        })
-        
-        const data = await res.json()
-        
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id_token: response.credential }),
+        });
+
+        const data = await res.json();
+
         if (data.success) {
-          localStorage.setItem('user', JSON.stringify(data.user))
-          localStorage.setItem('isLoggedIn', 'true')
-          navigate('/home')
+          localStorage.setItem("user", JSON.stringify(data.user));
+          localStorage.setItem("isLoggedIn", "true");
+          navigate("/home");
         } else {
-          alert('Google login failed: ' + (data.message || 'Unknown error'))
+          alert("Google login failed: " + (data.message || "Unknown error"));
         }
       } catch (error) {
-        console.error('Google login error:', error)
-        alert('Google login failed. Please try again.')
+        console.error("Google login error:", error);
+        alert("Google login failed. Please try again.");
       }
     }
 
     loadGoogleIdentity().then(() => {
-      if (!window.google?.accounts?.id) return
+      if (!window.google?.accounts?.id) return;
       window.google.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: handleCredentialResponse,
-        ux_mode: 'popup'
-      })
+        ux_mode: "popup",
+      });
       if (gBtnRef.current) {
         window.google.accounts.id.renderButton(gBtnRef.current, {
-          type: 'standard',
-          theme: 'outline',
-          size: 'large',
-          text: 'signin_with',
-          shape: 'rectangular',
-          logo_alignment: 'left',
-          width: 260
-        })
+          type: "standard",
+          theme: "outline",
+          size: "large",
+          text: "signin_with",
+          shape: "rectangular",
+          logo_alignment: "left",
+          width: 260,
+        });
       }
-    })
-  }, [navigate])
+    });
+  }, [navigate]);
 
+  //handleLogin is for simple login using email and password created for the website
   async function handleLogin() {
-    const email = document.querySelector('input[type="text"]').value
-    const password = document.querySelector('input[type="password"]').value
-    
-    if (!email || !password) {
-      alert('Please fill in both fields.')
-      return
-    }
-    
-    try {
-      const response = await fetch(`${API_BASE_URL}/users/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
-      
-      const data = await response.json()
-      
-      if (response.ok && data.success) {
-        localStorage.setItem('user', JSON.stringify(data.user))
-        localStorage.setItem('isLoggedIn', 'true')
-        navigate('/home')
-      } else {
-        alert(data.message || 'Login failed. Please check your credentials.')
-      }
-    } catch (error) {
-      console.error('Login error:', error)
-      alert('Unable to connect to server. Please try again later.')
-    }
+    const fetchData = () => {
+      fetch("http://localhost:5000/users")
+        .then((response) => response.json())
+        .then((json) => console.log(json)).catch(err => console.error(err))
+    };
+    return fetchData()
+    // const email = document.querySelector('input[type="text"]').value
+    // const password = document.querySelector('input[type="password"]').value
+
+    // if (!email || !password) {
+    //   alert('Please fill in both fields.')
+    //   return
+    // }
+
+    // try {
+    //   const response = await fetch(`${API_BASE_URL}/users/login`, {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({ email, password })
+    //   })
+
+    //   const data = await response.json()
+
+    //   if (response.ok && data.success) {
+    //     localStorage.setItem('user', JSON.stringify(data.user))
+    //     localStorage.setItem('isLoggedIn', 'true')
+    //     navigate('/home')
+    //   } else {
+    //     alert(data.message || 'Login failed. Please check your credentials.')
+    //   }
+    // } catch (error) {
+    //   console.error('Login error:', error)
+    //   alert('Unable to connect to server. Please try again later.')
+    // }
   }
 
   return (
@@ -109,15 +118,19 @@ export default function Login() {
             type="password"
             placeholder="Password"
             required
-            onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+            onKeyDown={(e) => e.key === "Enter" && handleLogin()}
           />
-          <button type="button" onClick={handleLogin}>Log In</button>
+          <button type="button" onClick={handleLogin}>
+            Log In
+          </button>
           <a href="#">Forgot password?</a>
-          <p>Not a user? <a href="#">Register</a></p>
+          <p>
+            Not a user? <a href="#">Register</a>
+          </p>
           <hr className="separator" />
           <div ref={gBtnRef} className="g-btn" />
         </form>
       </div>
     </div>
-  )
+  );
 }
