@@ -236,8 +236,13 @@ export default function Availability() {
         <div className="main">
           <div className="header">
             <div className="header-left">
-              <h1>{eventData.title}</h1>
-              <span>{eventDates}</span>
+              <div>
+                <button className="home-btn" onClick={() => navigate('/home')} title="Go to Home">
+                  ←
+                </button>
+                <h1>{eventData.title}</h1>
+                <span>{eventDates}</span>
+              </div>
             </div>
             <div className="header-right">
               <button className="btn" onClick={copyLink}>
